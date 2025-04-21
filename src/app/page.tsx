@@ -1,103 +1,180 @@
-import Image from "next/image";
+"use client";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Button } from "@/components/ui/button";
+import Heading from "@/components/ui/heading";
+import { Check } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [selectedProvider, setSelectedProvider] = useState<"privy" | "dynamic" | "turnkey" | "browser">("privy");
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  return (
+    <>
+      <section className="space-y-8">
+        <Heading>Introduction to 7702</Heading>
+        <div className="space-y-4 px-6">
+          <p className="">
+            EIP-7702 introduces a new concept to Ethereum which allows Externally Owned Wallets to have smart-contract
+            like code.
+          </p>
+          <p className="">
+            ZeroDev, an account abstraction infrastructure allows you to use 7702 for various groundbreaking use cases.
+          </p>
+          <p className="">
+            Explore the 7702 magic with the live examples below. To get started with 7702 you can read the{" "}
+            <Link
+              href="/docs"
+              className="text-primary underline underline-offset-4"
+            >
+              docs
+            </Link>{" "}
+            and set up a project on the{" "}
+            <Link
+              href="/dashboard"
+              className="text-primary underline underline-offset-4"
+            >
+              ZeroDev Dashboard
+            </Link>
+            .
+          </p>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+        {/* Table of contents for the examples */}
+        <div className="space-y-4 px-6">
+          <h2 className="font-mono text-xl">Table of Contents</h2>
+          <ul className="list-disc pl-8">
+            <li>
+              <Link
+                className="text-primary underline underline-offset-4"
+                href="#batching"
+              >
+                Batching
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="text-primary underline underline-offset-4"
+                href="#gas-sponsorship"
+              >
+                Gas Sponsorship
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="text-primary underline underline-offset-4"
+                href="#permissions"
+              >
+                Permissions
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="text-primary underline underline-offset-4"
+                href="#chain-abstraction"
+              >
+                Chain Abstraction
+              </Link>
+            </li>
+          </ul>
+        </div>
+      </section>
+
+      <section className="mb-12 space-y-8">
+        <Heading>Examples</Heading>
+
+        <Heading
+          as="h3"
+          className="text-lg"
+          variant="secondary"
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+          Select an Account Provider
+        </Heading>
+
+        <div className="space-y-4 px-6">
+          <p className="">
+            Various strategies can be implemented to achieve account abstraction using 7702 like using embedded wallets
+            or injected (browser) wallets. Embedded wallets like Privy, Dynamic, Turnkey let you use social logins along
+            with other perks.
+          </p>
+
+          <p className="">Select any one of the options to experience 7702 in action.</p>
+
+          <div className="w-full">
+            <div className="flex w-full gap-4">
+              <Button
+                variant={selectedProvider === "privy" ? "active" : "default"}
+                onClick={() => setSelectedProvider("privy")}
+              >
+                {selectedProvider === "privy" && (
+                  <div className="bg-primary absolute top-0 right-0 h-4 w-4 p-0.5 text-white">
+                    <Check className="m-auto size-3" />
+                  </div>
+                )}
+                Privy
+              </Button>
+              <Button
+                variant={selectedProvider === "dynamic" ? "active" : "default"}
+                onClick={() => setSelectedProvider("dynamic")}
+              >
+                {selectedProvider === "dynamic" && (
+                  <div className="bg-primary absolute top-0 right-0 h-4 w-4 p-0.5 text-white">
+                    <Check className="m-auto size-3" />
+                  </div>
+                )}
+                Dynamic
+              </Button>
+              <Button
+                variant={selectedProvider === "turnkey" ? "active" : "default"}
+                onClick={() => setSelectedProvider("turnkey")}
+              >
+                {selectedProvider === "turnkey" && (
+                  <div className="bg-primary absolute top-0 right-0 h-4 w-4 p-0.5 text-white">
+                    <Check className="m-auto size-3" />
+                  </div>
+                )}
+                Turnkey
+              </Button>
+              <Button
+                variant={selectedProvider === "browser" ? "active" : "default"}
+                onClick={() => setSelectedProvider("browser")}
+              >
+                {selectedProvider === "browser" && (
+                  <div className="bg-primary absolute top-0 right-0 h-4 w-4 p-0.5 text-white">
+                    <Check className="m-auto size-3" />
+                  </div>
+                )}
+                Browser Wallet
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <Accordion
+          type="single"
+          className="space-y-8 px-8"
         >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+          <AccordionItem value="privy">
+            <AccordionTrigger>
+              <span className="text-base">
+                How to setup <span className="capitalize">{selectedProvider} and ZeroDev?</span>
+              </span>
+            </AccordionTrigger>
+            <AccordionContent className="border-primary border-2 border-t-0 p-4">
+              <p>
+                To get started with {selectedProvider} you can read the{" "}
+                <Link
+                  href="/docs"
+                  className="text-primary underline underline-offset-4"
+                >
+                  docs
+                </Link>
+                .
+              </p>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
+      </section>
+    </>
   );
 }
