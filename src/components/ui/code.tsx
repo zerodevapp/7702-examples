@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { Check, Copy } from "lucide-react";
-import { useCallback, useState, ReactNode } from "react";
+import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useLocalStorage } from "usehooks-ts";
 export interface PackageManager {
@@ -28,7 +28,7 @@ type CodeBlockProps =
       packageManagers: PackageManager[];
     };
 
-export function CodeBlock({ ...props }: CodeBlockProps) {
+function CodeBlock({ ...props }: CodeBlockProps) {
   if (props.type === "command") {
     return (
       <div className={cn("relative")}>
@@ -44,52 +44,30 @@ export function CodeBlock({ ...props }: CodeBlockProps) {
   );
 }
 
-// Simple wrapper for backward compatibility
-const Code = ({ children, className }: { children: ReactNode; className?: string }) => {
-  return (
-    <pre className={cn("border-border bg-secondary/30 border-x border-b p-2", className)}>
-      <code>{children}</code>
-    </pre>
-  );
-};
-
 const PackageTabs = ({ packageManagers }: { packageManagers: PackageManager[] }) => {
-  const [selectedPackage, setSelectedPackage] = useLocalStorage(packageManagers[0].type, packageManagers[0].command);
-  const [copied, setCopied] = useState(false);
-  // Copy handler
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(packageManagers.find((pm) => pm.type === selectedPackage)?.command || "").then(() => {
-      toast.success("Copied to clipboard");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [packageManagers, selectedPackage]);
+  const [selectedPackage, setSelectedPackage] = useLocalStorage("package-manager", packageManagers[0].command);
 
   return (
     <Tabs
       defaultValue={selectedPackage}
-      className="bg-background border-primary w-full border-2"
+      className="bg-background border-primary/10 w-full gap-0 border-2"
       onValueChange={(value) => setSelectedPackage(value)}
     >
-      <TabsList className="bg-background border-primary w-full justify-start border-0 border-b-2">
+      <TabsList className="bg-background border-primary/10 w-full justify-start gap-0 border-0 border-b-2 p-0">
         {packageManagers.map((pm) => (
           <TabsTrigger
             key={pm.type}
             value={pm.type}
-            className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-7 max-w-fit cursor-pointer text-xs"
+            className="data-[state=active]:bg-primary/10 group hover:bg-primary/10 data-[state=active]:text-primary relative h-full max-w-fit cursor-pointer text-xs"
           >
+            <div className="active bg-primary absolute bottom-0 left-0 h-0.5 w-full opacity-0 transition-all duration-300 group-data-[state=active]:opacity-100"></div>
             {pm.type}
           </TabsTrigger>
         ))}
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-auto h-7 w-7 p-0"
-          onClick={handleCopy}
-        >
-          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          <span className="sr-only">Copy code</span>
-        </Button>
+        <CopyButton
+          className="mr-1 ml-auto"
+          content={packageManagers.find((pm) => pm.type === selectedPackage)?.command || ""}
+        />
       </TabsList>
 
       {packageManagers.map((pm) => (
@@ -97,7 +75,7 @@ const PackageTabs = ({ packageManagers }: { packageManagers: PackageManager[] })
           key={pm.type}
           value={pm.type}
         >
-          <pre className="border-border bg-secondary/30 overflow-auto border-x border-b p-4 text-sm">
+          <pre className="overflow-auto p-4 text-sm">
             <code className={`language-bash`}>{pm.command}</code>
           </pre>
         </TabsContent>
@@ -108,41 +86,28 @@ const PackageTabs = ({ packageManagers }: { packageManagers: PackageManager[] })
 
 const FileTabs = ({ files }: { files: CodeFile[] }) => {
   const [selectedFile, setSelectedFile] = useState(files[0].name);
-  const [copied, setCopied] = useState(false);
-  // Copy handler
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(files.find((file) => file.name === selectedFile)?.content || "").then(() => {
-      toast.success("Copied to clipboard");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [files, selectedFile]);
 
   return (
     <Tabs
       defaultValue={selectedFile}
-      className="bg-background border-primary w-full border-2"
+      className="bg-background border-primary/10 w-full gap-0 border-2"
       onValueChange={(value) => setSelectedFile(value)}
     >
-      <TabsList className="bg-background border-primary w-full justify-start border-0 border-b-2">
+      <TabsList className="bg-background border-primary/10 w-full justify-start gap-0 border-0 border-b-2 p-0">
         {files.map((file) => (
           <TabsTrigger
             key={file.name}
             value={file.name}
-            className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary h-7 max-w-fit cursor-pointer text-xs"
+            className="data-[state=active]:bg-primary/10 group hover:bg-primary/10 data-[state=active]:text-primary relative h-full max-w-fit cursor-pointer text-xs"
           >
+            <div className="active bg-primary absolute bottom-0 left-0 h-0.5 w-full opacity-0 transition-all duration-300 group-data-[state=active]:opacity-100"></div>
             {file.name}
           </TabsTrigger>
         ))}
-        <Button
-          variant="outline"
-          size="sm"
-          className="ml-auto h-7 w-7 p-0"
-          onClick={handleCopy}
-        >
-          {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-          <span className="sr-only">Copy code</span>
-        </Button>
+        <CopyButton
+          className="mr-1 ml-auto"
+          content={files.find((file) => file.name === selectedFile)?.content || ""}
+        />
       </TabsList>
 
       {files.map((file) => (
@@ -150,7 +115,7 @@ const FileTabs = ({ files }: { files: CodeFile[] }) => {
           key={file.name}
           value={file.name}
         >
-          <pre className="border-border bg-secondary/30 overflow-auto border-x border-b p-4 text-sm">
+          <pre className="overflow-auto p-4 text-sm">
             <code className={file.language ? `language-${file.language}` : ""}>{file.content}</code>
           </pre>
         </TabsContent>
@@ -159,4 +124,25 @@ const FileTabs = ({ files }: { files: CodeFile[] }) => {
   );
 };
 
-export default Code;
+const CopyButton = ({ content, className }: { content: string; className?: string }) => {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = useCallback(() => {
+    navigator.clipboard.writeText(content).then(() => {
+      toast.success("Copied to clipboard");
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }, [content]);
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className={cn("h-7 w-7 p-0", className)}
+      onClick={handleCopy}
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+    </Button>
+  );
+};
+
+export default CodeBlock;

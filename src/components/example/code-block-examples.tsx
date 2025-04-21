@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { CodeBlock, CodeFile } from "@/components/ui/code";
+import CodeBlock, { CodeFile } from "@/components/ui/code";
 
 export function CodeBlockExamples() {
   // Basic code example
