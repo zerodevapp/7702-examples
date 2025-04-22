@@ -2,6 +2,8 @@ import React from "react";
 import Heading from "../ui/heading";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import CodeBlock, { CodeBlockProps } from "../ui/code";
+
 type ExampleBlockProps = {
   title: string;
   docs: string;
@@ -10,19 +12,20 @@ type ExampleBlockProps = {
   preview: string;
   example: React.ReactNode;
   index: number;
+  codeBlock: Array<CodeBlockProps & { stepTitle?: string }>;
 };
 
-const ExampleBlock = ({ index, title, docs, github, link, preview, example }: ExampleBlockProps) => {
+const ExampleBlock = ({ index, title, docs, github, link, example, codeBlock }: ExampleBlockProps) => {
   return (
     <section
       id={title.toLowerCase().replace(" ", "-")}
-      className="flex h-screen max-h-256 flex-col gap-4"
+      className="@container flex flex-col gap-4 overflow-clip md:max-h-196"
     >
       <Heading>
         {index}. {title}
       </Heading>
 
-      <div className="space-x-4 px-8">
+      <div className="space-x-4 px-6">
         <Button
           asChild
           variant={"outline"}
@@ -41,17 +44,26 @@ const ExampleBlock = ({ index, title, docs, github, link, preview, example }: Ex
         >
           <Link href={link}>Copy Link</Link>
         </Button>
-        <Button
+        {/* <Button
           asChild
           variant={"outline"}
         >
           <Link href={preview}>Open Preview</Link>
-        </Button>
+        </Button> */}
       </div>
 
       {/* slot to display /batching/<example> */}
-
-      <div className="w-full flex-1 p-4">{example}</div>
+      <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden p-4 px-6 @2xl:grid-cols-2">
+        <div className="overflow-y-auto">
+          {codeBlock.map((block) => (
+            <div key={block.stepTitle}>
+              <h3>{block.stepTitle}</h3>
+              <CodeBlock {...block} />
+            </div>
+          ))}
+        </div>
+        <div className="overflow-hidden">{example}</div>
+      </div>
     </section>
   );
 };

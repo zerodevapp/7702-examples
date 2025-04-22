@@ -7,6 +7,10 @@ import { Fira_Code, Monomaniac_One } from "next/font/google";
 import "./globals.css";
 import { AccountProvider } from "@/context/account-provider";
 import { ReactQueryProvider } from "@/context/react-query";
+import batchingExampleCode from "@/app/@batchingExample/code";
+import gasSponsorshipExampleCode from "@/app/@gasSponsorshipExample/code";
+import permissionsExampleCode from "@/app/@permissionsExample/code";
+import chainAbstractionExampleCode from "@/app/@chainAbstractionExample/code";
 // import { ThemeProvider } from "@/components/theme-provider";
 
 const firaCode = Fira_Code({
@@ -60,6 +64,7 @@ export default function RootLayout({
                   link="https://batching.privy.io"
                   preview="https://batching.privy.io"
                   example={batchingExample}
+                  codeBlock={batchingExampleCode}
                   key="batching"
                 />
                 <ExampleBlock
@@ -70,6 +75,7 @@ export default function RootLayout({
                   link="https://gas-sponsorship.privy.io"
                   preview="https://gas-sponsorship.privy.io"
                   example={gasSponsorshipExample}
+                  codeBlock={gasSponsorshipExampleCode}
                   key="gas-sponsorship"
                 />
                 <ExampleBlock
@@ -80,6 +86,7 @@ export default function RootLayout({
                   link="https://permissions.privy.io"
                   preview="https://permissions.privy.io"
                   example={permissionsExample}
+                  codeBlock={permissionsExampleCode}
                   key="permissions"
                 />
                 <ExampleBlock
@@ -90,6 +97,7 @@ export default function RootLayout({
                   link="https://chain-abstraction.privy.io"
                   preview="https://chain-abstraction.privy.io"
                   example={chainAbstractionExample}
+                  codeBlock={chainAbstractionExampleCode}
                   key="chain-abstraction"
                 />
               </main>

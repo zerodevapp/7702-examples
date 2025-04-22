@@ -151,16 +151,16 @@ export default function Home() {
         </div>
 
         <Accordion
-          type="single"
-          className="space-y-8 px-8"
+          type="multiple"
+          className="space-y-8 px-6"
         >
           <AccordionItem value="privy">
-            <AccordionTrigger>
+            <AccordionTrigger className="border-primary/10 cursor-pointer border-2 px-4 underline-offset-4">
               <span className="text-base">
-                How to setup <span className="capitalize">{selectedProvider} and ZeroDev?</span>
+                How to setup <span className="capitalize">{selectedProvider} with ZeroDev?</span>
               </span>
             </AccordionTrigger>
-            <AccordionContent className="border-primary border-2 border-t-0 p-4">
+            <AccordionContent className="border-primary/10 border-2 border-t-0 p-4">
               <p>
                 To get started with {selectedProvider} you can read the{" "}
                 <Link

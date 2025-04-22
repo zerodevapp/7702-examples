@@ -1,9 +1,8 @@
 "use client";
 
-import { CodeBlockExamples } from "@/components/example/code-block-examples";
 import { Button } from "@/components/ui/button";
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
-import { DynamicWidget, useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { zeroAddress } from "viem";
@@ -83,7 +82,7 @@ const BatchingExample = () => {
   });
 
   return (
-    <div className="w-full p-4">
+    <div className="bg-primary/10 h-full min-h-160 w-full p-4">
       {/* <DynamicWidget /> */}
       {primaryWallet && (
         <>
@@ -99,8 +98,6 @@ const BatchingExample = () => {
           {txHash && <p className="text-green-500">Transaction sent: {txHash}</p>}
         </>
       )}
-
-      <CodeBlockExamples />
     </div>
   );
 };

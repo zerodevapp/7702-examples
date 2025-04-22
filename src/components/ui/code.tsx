@@ -7,7 +7,10 @@ import { Check, Copy } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 import { useLocalStorage } from "usehooks-ts";
-export interface PackageManager {
+import SyntaxHighlighter from "react-syntax-highlighter";
+import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
+
+export interface Command {
   type: string;
   command: string;
 }
@@ -18,14 +21,14 @@ export interface CodeFile {
   content: string;
 }
 
-type CodeBlockProps =
+export type CodeBlockProps =
   | {
       type: "files" | undefined;
       files: CodeFile[];
     }
   | {
       type: "command";
-      packageManagers: PackageManager[];
+      packageManagers: Command[];
     };
 
 function CodeBlock({ ...props }: CodeBlockProps) {
@@ -44,7 +47,7 @@ function CodeBlock({ ...props }: CodeBlockProps) {
   );
 }
 
-const PackageTabs = ({ packageManagers }: { packageManagers: PackageManager[] }) => {
+const PackageTabs = ({ packageManagers }: { packageManagers: Command[] }) => {
   const [selectedPackage, setSelectedPackage] = useLocalStorage("package-manager", packageManagers[0].command);
 
   return (
@@ -114,10 +117,30 @@ const FileTabs = ({ files }: { files: CodeFile[] }) => {
         <TabsContent
           key={file.name}
           value={file.name}
+          className="mt-0"
         >
-          <pre className="overflow-auto p-4 text-sm">
-            <code className={file.language ? `language-${file.language}` : ""}>{file.content}</code>
-          </pre>
+          <SyntaxHighlighter
+            language={file.language}
+            style={docco}
+            PreTag={(props) => (
+              <pre
+                {...props}
+                style={{
+                  ...props.style,
+                  padding: "0.75rem",
+                }}
+                className="overflow-auto text-sm"
+              />
+            )}
+            CodeTag={(props) => (
+              <code
+                {...props}
+                className="text-sm"
+              />
+            )}
+          >
+            {file.content}
+          </SyntaxHighlighter>
         </TabsContent>
       ))}
     </Tabs>
