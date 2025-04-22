@@ -3,7 +3,7 @@ import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
 import { ZeroDevSmartWalletConnectors } from "@dynamic-labs/ethereum-aa";
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
-import React, { createContext, useState } from "react";
+import React, { createContext, useContext, useState } from "react";
 import { createPublicClient, http } from "viem";
 import { sepolia } from "viem/chains";
 import { createConfig, WagmiProvider } from "wagmi";
@@ -50,4 +50,8 @@ export const AccountProvider = ({ children }: { children: React.ReactNode }) => 
       </DynamicContextProvider>
     </AccountProviderContext.Provider>
   );
+};
+
+export const useAccountProvider = () => {
+  return useContext(AccountProviderContext);
 };

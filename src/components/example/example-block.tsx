@@ -53,12 +53,18 @@ const ExampleBlock = ({ index, title, docs, github, link, example, codeBlock }: 
       </div>
 
       {/* slot to display /batching/<example> */}
-      <div className="grid flex-1 grid-cols-1 gap-4 overflow-hidden p-4 px-6 @2xl:grid-cols-2">
-        <div className="overflow-y-auto">
+      <div className="example grid flex-1 grid-cols-1 gap-4 overflow-hidden p-4 px-6 @2xl:grid-cols-2">
+        <div className="flex h-full flex-col gap-4 overflow-y-auto">
           {codeBlock.map((block) => (
-            <div key={block.stepTitle}>
+            <div
+              key={block.stepTitle}
+              className="flex-1"
+            >
               <h3>{block.stepTitle}</h3>
-              <CodeBlock {...block} />
+              <CodeBlock
+                className="h-full"
+                {...block}
+              />
             </div>
           ))}
         </div>

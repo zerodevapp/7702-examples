@@ -3,7 +3,7 @@
 import ExampleBlock from "@/components/example/example-block";
 import Navigation from "@/components/navigation";
 import Footer from "@/components/footer";
-import { Fira_Code, Monomaniac_One } from "next/font/google";
+import { Fira_Code, Monomaniac_One, Noto_Sans } from "next/font/google";
 import "./globals.css";
 import { AccountProvider } from "@/context/account-provider";
 import { ReactQueryProvider } from "@/context/react-query";
@@ -23,6 +23,12 @@ const monomaniacOne = Monomaniac_One({
   weight: "400",
   variable: "--font-monomaniac-one",
   subsets: ["latin"],
+});
+
+const notoSans = Noto_Sans({
+  weight: ["400", "500", "700"],
+  subsets: ["latin"],
+  variable: "--font-noto-sans",
 });
 
 // export const metadata: Metadata = {
@@ -48,7 +54,7 @@ export default function RootLayout({
       lang="en"
       className="scroll-smooth"
     >
-      <body className={`${firaCode.variable} ${monomaniacOne.variable} antialiased`}>
+      <body className={`${firaCode.variable} ${monomaniacOne.variable} ${notoSans.variable} antialiased`}>
         <ReactQueryProvider>
           <AccountProvider>
             <Navigation />
@@ -58,17 +64,6 @@ export default function RootLayout({
 
                 <ExampleBlock
                   index={1}
-                  title="Batching"
-                  docs="https://docs.privy.io/guides/batching"
-                  github="https://github.com/privy-io/privy-batching"
-                  link="https://batching.privy.io"
-                  preview="https://batching.privy.io"
-                  example={batchingExample}
-                  codeBlock={batchingExampleCode}
-                  key="batching"
-                />
-                <ExampleBlock
-                  index={2}
                   title="Gas Sponsorship"
                   docs="https://docs.privy.io/guides/gas-sponsorship"
                   github="https://github.com/privy-io/privy-gas-sponsorship"
@@ -78,6 +73,19 @@ export default function RootLayout({
                   codeBlock={gasSponsorshipExampleCode}
                   key="gas-sponsorship"
                 />
+
+                <ExampleBlock
+                  index={2}
+                  title="Batching"
+                  docs="https://docs.privy.io/guides/batching"
+                  github="https://github.com/privy-io/privy-batching"
+                  link="https://batching.privy.io"
+                  preview="https://batching.privy.io"
+                  example={batchingExample}
+                  codeBlock={batchingExampleCode}
+                  key="batching"
+                />
+
                 <ExampleBlock
                   index={3}
                   title="Permissions"

@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import Heading from "@/components/ui/heading";
 import { Check } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useAccountProvider } from "@/context/account-provider";
 
 export default function Home() {
-  const [selectedProvider, setSelectedProvider] = useState<"privy" | "dynamic" | "turnkey" | "browser">("privy");
+  // const [selectedProvider, setSelectedProvider] = useState<"privy" | "dynamic" | "turnkey" | "browser">("privy");
+  const { accountProvider: selectedProvider, setAccountProvider: setSelectedProvider } = useAccountProvider();
 
   return (
     <>

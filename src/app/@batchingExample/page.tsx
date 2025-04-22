@@ -1,12 +1,14 @@
 "use client";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { zeroAddress } from "viem";
-
+import { useAccountProvider } from "@/context/account-provider";
+import { Input } from "@/components/ui/input";
 const BatchingExample = () => {
   const { primaryWallet } = useDynamicContext();
 
@@ -81,23 +83,53 @@ const BatchingExample = () => {
     },
   });
 
+  const { accountProvider } = useAccountProvider();
+
   return (
-    <div className="bg-primary/10 h-full min-h-160 w-full p-4">
-      {/* <DynamicWidget /> */}
-      {primaryWallet && (
-        <>
-          <Button
-            onClick={(e) => {
-              e.preventDefault();
-              handleSendTransaction();
-            }}
-          >
-            {isPending ? "Sending..." : "Send Transaction"}
-          </Button>
-          {error && <p className="text-red-500">{error.message}</p>}
-          {txHash && <p className="text-green-500">Transaction sent: {txHash}</p>}
-        </>
-      )}
+    <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
+      <h4 className="text-lg font-medium">Batching Multiple Transactions</h4>
+
+      <Button className="bg-primary hover:bg-primary text-background absolute right-0 -bottom-4 h-8 w-full hover:shadow-none">
+        Privy:{" "}
+        <span>
+          {zeroAddress.slice(0, 6)}...{zeroAddress.slice(-4)}
+        </span>
+      </Button>
+
+      <div className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4">
+        <div className="flex items-center gap-2">
+          <Badge className="h-9 text-sm font-medium">1. Deploy Token</Badge>
+          <Input
+            className="bg-background"
+            type="text"
+            placeholder="Token Symbol"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge className="h-9 text-sm font-medium">2. Mint Token</Badge>
+          <Input
+            className="bg-background"
+            type="text"
+            placeholder="Amount"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge className="h-9 text-sm font-medium">3. Send to</Badge>
+          <Input
+            className="bg-background"
+            type="text"
+            placeholder="Address"
+            value="granny.eth"
+          />
+        </div>
+
+        <Button
+          disabled={isPending}
+          onClick={() => handleSendTransaction()}
+        >
+          {isPending ? "Sending..." : "Send Batched Transaction"}
+        </Button>
+      </div>
     </div>
   );
 };

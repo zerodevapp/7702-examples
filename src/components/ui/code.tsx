@@ -25,35 +25,39 @@ export type CodeBlockProps =
   | {
       type: "files" | undefined;
       files: CodeFile[];
+      className?: string;
     }
   | {
       type: "command";
       packageManagers: Command[];
+      className?: string;
     };
 
 function CodeBlock({ ...props }: CodeBlockProps) {
   if (props.type === "command") {
     return (
-      <div className={cn("relative")}>
-        <PackageTabs packageManagers={props.packageManagers} />
-      </div>
+      <PackageTabs
+        className={props.className}
+        packageManagers={props.packageManagers}
+      />
     );
   }
 
   return (
-    <div className={cn("relative")}>
-      <FileTabs files={props.files} />
-    </div>
+    <FileTabs
+      className={props.className}
+      files={props.files}
+    />
   );
 }
 
-const PackageTabs = ({ packageManagers }: { packageManagers: Command[] }) => {
+const PackageTabs = ({ packageManagers, className }: { packageManagers: Command[]; className?: string }) => {
   const [selectedPackage, setSelectedPackage] = useLocalStorage("package-manager", packageManagers[0].command);
 
   return (
     <Tabs
       defaultValue={selectedPackage}
-      className="bg-background border-primary/10 w-full gap-0 border-2"
+      className={cn("bg-background border-primary/10 relative w-full gap-0 border-2", className)}
       onValueChange={(value) => setSelectedPackage(value)}
     >
       <TabsList className="bg-background border-primary/10 w-full justify-start gap-0 border-0 border-b-2 p-0">
@@ -78,7 +82,7 @@ const PackageTabs = ({ packageManagers }: { packageManagers: Command[] }) => {
           key={pm.type}
           value={pm.type}
         >
-          <pre className="overflow-auto p-4 text-sm">
+          <pre className="h-full overflow-auto p-4 text-sm">
             <code className={`language-bash`}>{pm.command}</code>
           </pre>
         </TabsContent>
@@ -87,13 +91,13 @@ const PackageTabs = ({ packageManagers }: { packageManagers: Command[] }) => {
   );
 };
 
-const FileTabs = ({ files }: { files: CodeFile[] }) => {
+const FileTabs = ({ files, className }: { files: CodeFile[]; className?: string }) => {
   const [selectedFile, setSelectedFile] = useState(files[0].name);
 
   return (
     <Tabs
       defaultValue={selectedFile}
-      className="bg-background border-primary/10 w-full gap-0 border-2"
+      className={cn("bg-background border-primary/10 relative w-full gap-0 border-2", className)}
       onValueChange={(value) => setSelectedFile(value)}
     >
       <TabsList className="bg-background border-primary/10 w-full justify-start gap-0 border-0 border-b-2 p-0">
@@ -117,7 +121,7 @@ const FileTabs = ({ files }: { files: CodeFile[] }) => {
         <TabsContent
           key={file.name}
           value={file.name}
-          className="mt-0"
+          className="mt-0 h-full"
         >
           <SyntaxHighlighter
             language={file.language}
@@ -129,7 +133,7 @@ const FileTabs = ({ files }: { files: CodeFile[] }) => {
                   ...props.style,
                   padding: "0.75rem",
                 }}
-                className="overflow-auto text-sm"
+                className="h-full overflow-auto text-sm"
               />
             )}
             CodeTag={(props) => (
