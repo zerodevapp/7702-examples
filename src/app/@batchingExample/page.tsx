@@ -2,19 +2,17 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { zeroAddress } from "viem";
-import { useAccountProvider } from "@/context/account-provider";
-import { Input } from "@/components/ui/input";
 const BatchingExample = () => {
   const { primaryWallet } = useDynamicContext();
 
   const {
     data: txHash,
-    error,
     isPending,
     mutate: handleSendTransaction,
   } = useMutation({
@@ -82,8 +80,6 @@ const BatchingExample = () => {
       });
     },
   });
-
-  const { accountProvider } = useAccountProvider();
 
   return (
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
