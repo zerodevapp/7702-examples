@@ -89,12 +89,13 @@ const BatchingExample = () => {
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
       <h4 className="text-lg font-medium">Batching Multiple Transactions</h4>
 
-      <Button className="bg-primary hover:bg-primary text-background absolute right-0 -bottom-4 h-8 w-full hover:shadow-none">
-        Privy:{" "}
+      <div className="bg-primary hover:bg-primary text-background absolute right-0 -bottom-4 flex h-8 w-full items-center justify-evenly text-sm hover:shadow-none">
         <span>
-          {zeroAddress.slice(0, 6)}...{zeroAddress.slice(-4)}
+          Privy: {zeroAddress.slice(0, 6)}...{zeroAddress.slice(-4)}
         </span>
-      </Button>
+        <span>|</span>
+        <span>7702 Deployed: Yes</span>
+      </div>
 
       <div className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4">
         <div className="flex items-center gap-2">
