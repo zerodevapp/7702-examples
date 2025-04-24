@@ -1,16 +1,17 @@
 "use client";
 // import type { Metadata } from "next";
-import ExampleBlock from "@/components/example/example-block";
-import Navigation from "@/components/navigation";
-import Footer from "@/components/footer";
-import { Fira_Code, Monomaniac_One, Noto_Sans } from "next/font/google";
-import "./globals.css";
-import { AccountProvider } from "@/context/account-provider";
-import { ReactQueryProvider } from "@/context/react-query";
 import batchingExampleCode from "@/app/@batchingExample/code";
+import chainAbstractionExampleCode from "@/app/@chainAbstractionExample/code";
 import gasSponsorshipExampleCode from "@/app/@gasSponsorshipExample/code";
 import permissionsExampleCode from "@/app/@permissionsExample/code";
-import chainAbstractionExampleCode from "@/app/@chainAbstractionExample/code";
+import ExampleBlock from "@/components/example/example-block";
+import Footer from "@/components/footer";
+import Navigation from "@/components/navigation";
+import AccountProviderWrapper from "@/context/wrapper";
+import { ReactQueryProvider } from "@/context/react-query";
+import { Fira_Code, Monomaniac_One, Noto_Sans } from "next/font/google";
+import { Toaster } from "sonner";
+import "./globals.css";
 // import { ThemeProvider } from "@/components/theme-provider";
 
 const firaCode = Fira_Code({
@@ -56,7 +57,7 @@ export default function RootLayout({
     >
       <body className={`${firaCode.variable} ${monomaniacOne.variable} ${notoSans.variable} antialiased`}>
         <ReactQueryProvider>
-          <AccountProvider>
+          <AccountProviderWrapper>
             <Navigation />
             <div className="border-primary container mx-auto max-w-5xl space-y-12 overflow-hidden border-x-2 py-6">
               <main className="space-y-12">
@@ -67,11 +68,18 @@ export default function RootLayout({
                   title="Gas Sponsorship"
                   docs="https://docs.privy.io/guides/gas-sponsorship"
                   github="https://github.com/privy-io/privy-gas-sponsorship"
-                  link="https://gas-sponsorship.privy.io"
-                  preview="https://gas-sponsorship.privy.io"
                   example={gasSponsorshipExample}
                   codeBlock={gasSponsorshipExampleCode}
                   key="gas-sponsorship"
+                  description={
+                    <>
+                      <p className="px-6">
+                        Sponsoring gas for users is as easy as setting up a project on the ZeroDev dashboard, creating a
+                        new <span className="mx-[1ch] font-medium">&quot;Sponsor All&quot;</span> policy and sending the
+                        user ops with the Paymaster configured.
+                      </p>
+                    </>
+                  }
                 />
 
                 <ExampleBlock
@@ -79,11 +87,15 @@ export default function RootLayout({
                   title="Batching"
                   docs="https://docs.privy.io/guides/batching"
                   github="https://github.com/privy-io/privy-batching"
-                  link="https://batching.privy.io"
-                  preview="https://batching.privy.io"
                   example={batchingExample}
                   codeBlock={batchingExampleCode}
                   key="batching"
+                  description={
+                    <p className="px-6">
+                      This example demonstrates how to use the Privy SDK to create a new account, sign in with an email,
+                      and send a user operation.
+                    </p>
+                  }
                 />
 
                 <ExampleBlock
@@ -91,27 +103,36 @@ export default function RootLayout({
                   title="Permissions"
                   docs="https://docs.privy.io/guides/permissions"
                   github="https://github.com/privy-io/privy-permissions"
-                  link="https://permissions.privy.io"
-                  preview="https://permissions.privy.io"
                   example={permissionsExample}
                   codeBlock={permissionsExampleCode}
                   key="permissions"
+                  description={
+                    <p className="px-6">
+                      This example demonstrates how to use the Privy SDK to create a new account, sign in with an email,
+                      and send a user operation.
+                    </p>
+                  }
                 />
                 <ExampleBlock
                   index={4}
                   title="Chain Abstraction"
                   docs="https://docs.privy.io/guides/chain-abstraction"
                   github="https://github.com/privy-io/privy-chain-abstraction"
-                  link="https://chain-abstraction.privy.io"
-                  preview="https://chain-abstraction.privy.io"
                   example={chainAbstractionExample}
                   codeBlock={chainAbstractionExampleCode}
                   key="chain-abstraction"
+                  description={
+                    <p className="px-6">
+                      This example demonstrates how to use the Privy SDK to create a new account, sign in with an email,
+                      and send a user operation.
+                    </p>
+                  }
                 />
               </main>
             </div>
             <Footer />
-          </AccountProvider>
+            <Toaster richColors />
+          </AccountProviderWrapper>
         </ReactQueryProvider>
       </body>
     </html>

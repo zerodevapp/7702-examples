@@ -60,12 +60,12 @@ const PackageTabs = ({ packageManagers, className }: { packageManagers: Command[
       className={cn("bg-background border-primary/10 relative w-full gap-0 border-2", className)}
       onValueChange={(value) => setSelectedPackage(value)}
     >
-      <TabsList className="bg-background border-primary/10 w-full justify-start gap-0 border-0 border-b-2 p-0">
+      <TabsList className="bg-background border-primary/10 h-fit w-full justify-start gap-0 border-0 border-b-2 p-0">
         {packageManagers.map((pm) => (
           <TabsTrigger
             key={pm.type}
             value={pm.type}
-            className="data-[state=active]:bg-primary/10 group hover:bg-primary/10 data-[state=active]:text-primary relative h-full max-w-fit cursor-pointer text-xs"
+            className="data-[state=active]:bg-primary/10 group hover:bg-primary/10 data-[state=active]:text-primary relative h-10 max-w-fit cursor-pointer text-xs"
           >
             <div className="active bg-primary absolute bottom-0 left-0 h-0.5 w-full opacity-0 transition-all duration-300 group-data-[state=active]:opacity-100"></div>
             {pm.type}
@@ -100,12 +100,12 @@ const FileTabs = ({ files, className }: { files: CodeFile[]; className?: string 
       className={cn("bg-background border-primary/10 relative w-full gap-0 border-2", className)}
       onValueChange={(value) => setSelectedFile(value)}
     >
-      <TabsList className="bg-background border-primary/10 w-full justify-start gap-0 border-0 border-b-2 p-0">
+      <TabsList className="bg-background border-primary/10 h-fit w-full justify-start gap-0 border-0 border-b-2 p-0">
         {files.map((file) => (
           <TabsTrigger
             key={file.name}
             value={file.name}
-            className="data-[state=active]:bg-primary/10 group hover:bg-primary/10 data-[state=active]:text-primary relative h-full max-w-fit cursor-pointer text-xs"
+            className="data-[state=active]:bg-primary/10 group hover:bg-primary/10 data-[state=active]:text-primary relative h-10 max-w-fit cursor-pointer text-xs"
           >
             <div className="active bg-primary absolute bottom-0 left-0 h-0.5 w-full opacity-0 transition-all duration-300 group-data-[state=active]:opacity-100"></div>
             {file.name}

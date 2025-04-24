@@ -1,15 +1,22 @@
 "use client";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Heading from "@/components/ui/heading";
+import { useAccountActions } from "@/context/account-actions-provider";
+import { useAccountWrapperContext } from "@/context/wrapper";
+import { SCOPE_URL } from "@/lib/constants";
 import { Check } from "lucide-react";
 import Link from "next/link";
-import { useAccountProvider } from "@/context/account-provider";
 
 export default function Home() {
-  // const [selectedProvider, setSelectedProvider] = useState<"privy" | "dynamic" | "turnkey" | "browser">("privy");
-  const { accountProvider: selectedProvider, setAccountProvider: setSelectedProvider } = useAccountProvider();
-
+  const {
+    accountProvider: selectedProvider,
+    kernelAccount,
+    setAccountProvider: setSelectedProvider,
+    embeddedWallet,
+  } = useAccountWrapperContext();
+  const { signIn, signAuthorization } = useAccountActions();
   return (
     <>
       <section className="space-y-8">
@@ -149,6 +156,59 @@ export default function Home() {
               </Button>
             </div>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => {
+              signIn();
+            }}
+          >
+            Sign In with <span className="capitalize">{selectedProvider}</span>
+          </Button>
+
+          {/* 7702 status and provider details of the account */}
+          {embeddedWallet && (
+            <div className="space-y-2 rounded-md border-2 p-4">
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-lg font-medium">Account Status</span>
+                {kernelAccount?.isDeployed ? (
+                  <Badge variant="default">Deployed</Badge>
+                ) : (
+                  <Badge variant="secondary">Not Deployed</Badge>
+                )}
+              </div>
+
+              <p>
+                Address:{" "}
+                <a
+                  className="font-medium underline underline-offset-2"
+                  href={`${SCOPE_URL}/address/${kernelAccount?.address}`}
+                >
+                  {embeddedWallet?.address}
+                </a>
+              </p>
+              <p>
+                EIP7702 Auth:{" "}
+                <a
+                  target="_blank"
+                  className="font-medium underline underline-offset-2"
+                  href={`${SCOPE_URL}/address/${kernelAccount?.eip7702Auth?.address}`}
+                >
+                  {kernelAccount?.eip7702Auth?.address}
+                </a>
+              </p>
+
+              {!kernelAccount?.isDeployed ? (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    signAuthorization();
+                  }}
+                >
+                  Upgrade <span className="capitalize">{selectedProvider}</span> Account to 7702 account
+                </Button>
+              ) : null}
+            </div>
+          )}
         </div>
 
         <Accordion

@@ -1,0 +1,102 @@
+"use client";
+import { PrivyProvider } from "@privy-io/react-auth";
+import { CreateKernelAccountReturnType, KernelAccountClient } from "@zerodev/sdk";
+import React, { createContext, useContext, useMemo, useState } from "react";
+import PrivyAccountProvider from "./account-providers/privy-account-provider";
+
+export const accountProviders = ["privy", "dynamic", "turnkey", "browser"] as const;
+export type AccountProviders = (typeof accountProviders)[number];
+
+export const AccountProviderContext = createContext<{
+  accountProvider: AccountProviders;
+  setAccountProvider: (accountProvider: AccountProviders) => void;
+  kernelAccountClient: KernelAccountClient | null;
+  kernelAccount: CreateKernelAccountReturnType | null;
+  setKernelAccountClient: (kernelAccountClient: KernelAccountClient | null) => void;
+  setKernelAccount: (kernelAccount: CreateKernelAccountReturnType | null) => void;
+  embeddedWallet: EmbeddedWallet | null;
+  setEmbeddedWallet: (embeddedWallet: EmbeddedWallet | null) => void;
+}>({
+  accountProvider: "privy",
+  setAccountProvider: () => {},
+  kernelAccountClient: null,
+  kernelAccount: null,
+  setKernelAccountClient: () => {},
+  setKernelAccount: () => {},
+  embeddedWallet: null,
+  setEmbeddedWallet: () => {},
+});
+
+type EmbeddedWallet = {
+  provider: "privy" | "dynamic" | "turnkey" | "browser";
+  address: string;
+  is7702Initialized: boolean;
+};
+
+const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => {
+  const [accountProvider, setAccountProvider] = useState<AccountProviders>("privy");
+  const [embeddedWallet, setEmbeddedWallet] = useState<EmbeddedWallet | null>(null);
+  const [kernelAccountClient, setKernelAccountClient] = useState<KernelAccountClient | null>(null);
+  const [kernelAccount, setKernelAccount] = useState<CreateKernelAccountReturnType | null>(null);
+
+  const EmbeddedOrInjectedProvider = useMemo(() => {
+    if (accountProvider === "privy") {
+      const PrivyProviderWrapper = ({ children }: { children: React.ReactNode }) => (
+        <PrivyProvider
+          appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
+          clientId={process.env.NEXT_PUBLIC_CLIENT_ID}
+          config={{
+            // Create embedded wallets for users who don't have a wallet
+            embeddedWallets: {
+              showWalletUIs: true,
+              createOnLogin: "all-users",
+            },
+          }}
+        >
+          <PrivyAccountProvider>{children}</PrivyAccountProvider>
+        </PrivyProvider>
+      );
+      return PrivyProviderWrapper;
+    }
+    // if (accountProvider === "dynamic") {
+    //   return DynamicAccountProvider;
+    // }
+    // if (accountProvider === "turnkey") {
+    //   return TurnkeyAccountProvider;
+    // }
+    // if (accountProvider === "browser") {
+    //   return BrowserAccountProvider;
+    // }
+  }, [accountProvider]);
+
+  if (!EmbeddedOrInjectedProvider) {
+    return (
+      <div className="flex h-screen w-screen items-center justify-center">
+        <div className="text-2xl font-bold">Invalid account provider selected</div>
+      </div>
+    );
+  }
+
+  return (
+    <AccountProviderContext.Provider
+      value={{
+        accountProvider,
+        setAccountProvider,
+        kernelAccountClient,
+        kernelAccount,
+        setKernelAccountClient,
+        setKernelAccount,
+        embeddedWallet,
+        setEmbeddedWallet,
+      }}
+    >
+      <EmbeddedOrInjectedProvider>{children}</EmbeddedOrInjectedProvider>
+    </AccountProviderContext.Provider>
+  );
+};
+
+export const useAccountWrapperContext = () => {
+  return useContext(AccountProviderContext);
+};
+
+export default AccountProviderWrapper;

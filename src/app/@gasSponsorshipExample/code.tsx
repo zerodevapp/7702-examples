@@ -1,31 +1,52 @@
 import { CodeBlockProps } from "@/components/ui/code";
 
-const batchingExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
+const gasSponsorshipExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
   {
     type: "files",
     files: [
       {
-        name: "index.js",
-        language: "javascript",
-        content: `kernelClient.sendUserOperation({
-    account: account,
-    calls: [
-        {
-        to: zeroAddress,
-        value: BigInt(0),
-        data: '0x',
-        },
-        {
-        to: '0x65A49dF64216bE58F8851A553863658dB7Fe301F',
-        value: BigInt(0),
-        data: '0x',
-        },
-    ],
-    })
-}`,
+        name: "index.ts",
+        language: "typescript",
+        content: `await kernelAccountClient?.sendTransaction({
+  account: kernelAccountClient.account,
+  to: zeroAddress,
+  value: BigInt(0),
+  data: "0x",
+  chain: chain,
+});`,
+      },
+      {
+        name: "client.ts",
+        language: "typescript",
+        content: `const kernelAccount = createKernelAccount(publicClient, {
+  plugins: {
+    sudo: ecdsaValidator!,
+  },
+  entryPoint,
+  kernelVersion,
+  address: walletClient!.account.address,
+  eip7702Auth: authorization,
+});
+
+
+const paymasterClient = createZeroDevPaymasterClient({
+  chain,
+  transport: http(paymasterRpc)
+});
+
+
+
+const kernelAccountClient = createKernelAccountClient({
+  account: kernelAccount,
+  chain,
+  bundlerTransport: http(bundlerRpc),
+  paymaster: paymasterClient,
+  client: publicClient
+});
+`,
       },
     ],
   },
 ];
 
-export default batchingExampleCode;
+export default gasSponsorshipExampleCode;

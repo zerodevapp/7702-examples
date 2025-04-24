@@ -3,91 +3,85 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
-import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useAccountActions } from "@/context/account-actions-provider";
+import { useAccountWrapperContext } from "@/context/wrapper";
+import { SCOPE_URL } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { zeroAddress } from "viem";
+import { encodeFunctionData } from "viem";
 const BatchingExample = () => {
-  const { primaryWallet } = useDynamicContext();
+  const {} = useAccountActions();
+  const { embeddedWallet, kernelAccountClient } = useAccountWrapperContext();
 
   const {
-    data: txHash,
+    mutate: sendTransaction,
     isPending,
-    mutate: handleSendTransaction,
+    data: txHash,
   } = useMutation({
-    mutationKey: ["sendTransaction"],
+    mutationKey: ["batching sendUserOperation"],
     mutationFn: async () => {
-      const connector = primaryWallet?.connector;
+      if (!kernelAccountClient?.account) throw new Error("No account found");
 
-      if (!connector) {
-        throw new Error("No connector found");
-      }
+      const TOKEN_ADDRESS = "0x3Ad1E36CCC4d781bf73E24533943c745E50c569b";
 
-      if (!isZeroDevConnector(connector)) {
-        throw new Error("Connector is not a ZeroDev connector");
-      }
-
-      const params = {
-        withSponsorship: true,
-      };
-      const kernelClient = connector.getAccountAbstractionProvider(params);
-
-      if (!kernelClient) {
-        throw new Error("No kernel client found");
-      }
-
-      try {
-        const userOpHash = await kernelClient.sendTransaction({
-          calls: [
-            {
-              data: "0x",
-              to: zeroAddress,
-              value: BigInt(0),
-            },
-            {
-              data: "0x",
-              to: zeroAddress,
-              value: BigInt(0),
-            },
-          ],
-        });
-
-        const { receipt } = await kernelClient.waitForUserOperationReceipt({
-          hash: userOpHash,
-        });
-
-        return receipt.transactionHash;
-      } catch (err) {
-        throw new Error((err as Error).message || "Error sending transaction");
-      }
-    },
-    onSuccess: () => {
-      toast.success("Transaction sent successfully", {
-        description: "Transaction sent successfully",
-        action: {
-          label: "View on Explorer",
-          onClick: () => {
-            window.open(`https://sepolia.etherscan.io/tx/${txHash}`, "_blank");
+      return kernelAccountClient?.sendUserOperation({
+        account: kernelAccountClient.account,
+        calls: [
+          {
+            to: TOKEN_ADDRESS,
+            value: BigInt(0),
+            data: encodeFunctionData({
+              abi: [
+                {
+                  name: "mint",
+                  type: "function",
+                  inputs: [
+                    { name: "to", type: "address" },
+                    { name: "amount", type: "uint256" },
+                  ],
+                },
+              ],
+              functionName: "mint",
+              args: [kernelAccountClient.account.address, BigInt(1000000)],
+            }),
           },
-        },
+          {
+            to: TOKEN_ADDRESS,
+            value: BigInt(0),
+            data: encodeFunctionData({
+              abi: [
+                {
+                  name: "transfer",
+                  type: "function",
+                  inputs: [
+                    { name: "to", type: "address" },
+                    { name: "amount", type: "uint256" },
+                  ],
+                },
+              ],
+              functionName: "transfer",
+              args: ["0x65A49dF64216bE58F8851A553863658dB7Fe301F", BigInt(1000000)],
+            }),
+          },
+        ],
       });
+    },
+    onSuccess: (data) => {
+      toast.success("Transaction sent successfully");
+      console.log(data);
     },
     onError: (error) => {
-      console.log(error);
-      toast.error(error.message || "Error sending transaction", {
-        description: "Error sending transaction",
-      });
+      toast.error("Transaction failed");
+      console.error(error);
     },
   });
-
   return (
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
       <h4 className="text-lg font-medium">Batching Multiple Transactions</h4>
 
       <div className="bg-primary hover:bg-primary text-background absolute right-0 -bottom-4 flex h-8 w-full items-center justify-evenly text-sm hover:shadow-none">
         <span>
-          Privy: {zeroAddress.slice(0, 6)}...{zeroAddress.slice(-4)}
+          Privy: {embeddedWallet?.address.slice(0, 6)}...{embeddedWallet?.address.slice(-4)}
         </span>
         <span>|</span>
         <span>7702 Deployed: Yes</span>
@@ -95,37 +89,43 @@ const BatchingExample = () => {
 
       <div className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4">
         <div className="flex items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">1. Deploy Token</Badge>
+          <Badge className="h-9 text-sm font-medium">1. Mint Token</Badge>
           <Input
             className="bg-background"
             type="text"
             placeholder="Token Symbol"
+            value="ZeroDev"
+            disabled={true}
           />
         </div>
         <div className="flex items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">2. Mint Token</Badge>
+          <Badge className="h-9 text-sm font-medium">2. Transfer Token</Badge>
           <Input
             className="bg-background"
             type="text"
             placeholder="Amount"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">3. Send to</Badge>
-          <Input
-            className="bg-background"
-            type="text"
-            placeholder="Address"
-            value="granny.eth"
+            value="1000000"
+            disabled={true}
           />
         </div>
 
         <Button
           disabled={isPending}
-          onClick={() => handleSendTransaction()}
+          onClick={() => sendTransaction()}
         >
           {isPending ? "Sending..." : "Send Batched Transaction"}
         </Button>
+
+        {txHash && (
+          <a
+            href={`${SCOPE_URL}/op/${txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary text-sm underline underline-offset-4"
+          >
+            View Batched Transaction
+          </a>
+        )}
       </div>
     </div>
   );
