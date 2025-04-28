@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountActions } from "@/context/account-actions-provider";
 import { useAccountWrapperContext } from "@/context/wrapper";
-import { ZDEV_DECIMALS, SCOPE_URL, TOKEN_ADDRESS } from "@/lib/constants";
+import { ZERODEV_DECIMALS, SCOPE_URL, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { encodeFunctionData, parseUnits } from "viem";
+import { encodeFunctionData, formatUnits, parseUnits } from "viem";
 import { useBalance } from "wagmi";
-
+import { sepolia } from "viem/chains";
 const BatchingExample = () => {
   const {} = useAccountActions();
   const { kernelAccountClient } = useAccountWrapperContext();
@@ -21,10 +21,11 @@ const BatchingExample = () => {
 
   const { data: balance } = useBalance({
     address: kernelAccountClient?.account?.address,
-    token: TOKEN_ADDRESS,
+    token: ZERODEV_TOKEN_ADDRESS,
     query: {
       refetchInterval: 5000,
     },
+    chainId: sepolia.id,
   });
 
   const {
@@ -40,7 +41,7 @@ const BatchingExample = () => {
         account: kernelAccountClient.account,
         calls: [
           {
-            to: TOKEN_ADDRESS,
+            to: ZERODEV_TOKEN_ADDRESS,
             value: BigInt(0),
             data: encodeFunctionData({
               abi: [
@@ -54,11 +55,11 @@ const BatchingExample = () => {
                 },
               ],
               functionName: "mint",
-              args: [kernelAccountClient.account.address, parseUnits(amount, ZDEV_DECIMALS)],
+              args: [kernelAccountClient.account.address, parseUnits(amount, ZERODEV_DECIMALS)],
             }),
           },
           {
-            to: TOKEN_ADDRESS,
+            to: ZERODEV_TOKEN_ADDRESS,
             value: BigInt(0),
             data: encodeFunctionData({
               abi: [
@@ -72,7 +73,7 @@ const BatchingExample = () => {
                 },
               ],
               functionName: "transfer",
-              args: [toAddress, parseUnits(amount, ZDEV_DECIMALS)],
+              args: [toAddress, parseUnits(amount, ZERODEV_DECIMALS)],
             }),
           },
         ],
@@ -115,7 +116,7 @@ const BatchingExample = () => {
         </div>
 
         <p className="text-sm">
-          Balance: {balance?.value.toString()} {balance?.symbol}
+          Balance: {formatUnits(balance?.value ?? BigInt(0), balance?.decimals ?? 18)} {balance?.symbol}
         </p>
 
         <Button

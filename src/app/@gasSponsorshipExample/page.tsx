@@ -2,14 +2,18 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { useAccountWrapperContext } from "@/context/wrapper";
-import { chain, SCOPE_URL } from "@/lib/constants";
+import { chain, SCOPE_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
-import { zeroAddress } from "viem";
+import { encodeFunctionData, parseUnits } from "viem";
 
 const GasSponsorshipExample = () => {
   const { embeddedWallet, kernelAccountClient } = useAccountWrapperContext();
+
+  const [amount, setAmount] = useState("");
 
   const {
     mutate: sendTransaction,
@@ -21,9 +25,22 @@ const GasSponsorshipExample = () => {
       if (!kernelAccountClient?.account) throw new Error("No account found");
       return kernelAccountClient?.sendTransaction({
         account: kernelAccountClient.account,
-        to: zeroAddress,
+        to: ZERODEV_TOKEN_ADDRESS,
         value: BigInt(0),
-        data: "0x",
+        data: encodeFunctionData({
+          abi: [
+            {
+              name: "mint",
+              type: "function",
+              inputs: [
+                { name: "to", type: "address" },
+                { name: "amount", type: "uint256" },
+              ],
+            },
+          ],
+          functionName: "mint",
+          args: [kernelAccountClient.account.address, parseUnits(amount, ZERODEV_DECIMALS)],
+        }),
         chain: chain,
       });
     },
@@ -46,6 +63,13 @@ const GasSponsorshipExample = () => {
       >
         <div className="flex items-center gap-2">
           <Badge className="h-9 text-sm font-medium">Mint 0DEV Token</Badge>
+          <Input
+            className="bg-background"
+            type="text"
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+          />
         </div>
 
         <Button
@@ -58,7 +82,7 @@ const GasSponsorshipExample = () => {
         {/* Tx link */}
         {txHash && (
           <a
-            href={`${SCOPE_URL}/op/${txHash}`}
+            href={`${SCOPE_URL}/tx/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary text-sm underline underline-offset-4"

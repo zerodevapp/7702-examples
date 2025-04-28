@@ -5,6 +5,7 @@ import React, { createContext, useContext, useMemo, useState } from "react";
 import PrivyAccountProvider from "./account-providers/privy-account-provider";
 import { createConfig, http, WagmiProvider } from "wagmi";
 import { baseSepolia, sepolia } from "viem/chains";
+import { IntentClient } from "@zerodev/intent";
 
 export const accountProviders = ["privy", "dynamic", "turnkey", "browser"] as const;
 export type AccountProviders = (typeof accountProviders)[number];
@@ -18,6 +19,8 @@ export const AccountProviderContext = createContext<{
   setKernelAccount: (kernelAccount: CreateKernelAccountReturnType | null) => void;
   embeddedWallet: EmbeddedWallet | null;
   setEmbeddedWallet: (embeddedWallet: EmbeddedWallet | null) => void;
+  intentClient: IntentClient | null;
+  setIntentClient: (intentClient: IntentClient | null) => void;
 }>({
   accountProvider: "privy",
   setAccountProvider: () => {},
@@ -27,6 +30,8 @@ export const AccountProviderContext = createContext<{
   setKernelAccount: () => {},
   embeddedWallet: null,
   setEmbeddedWallet: () => {},
+  intentClient: null,
+  setIntentClient: () => {},
 });
 
 type EmbeddedWallet = {
@@ -48,6 +53,7 @@ const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => 
   const [embeddedWallet, setEmbeddedWallet] = useState<EmbeddedWallet | null>(null);
   const [kernelAccountClient, setKernelAccountClient] = useState<KernelAccountClient | null>(null);
   const [kernelAccount, setKernelAccount] = useState<CreateKernelAccountReturnType | null>(null);
+  const [intentClient, setIntentClient] = useState<IntentClient | null>(null);
 
   const EmbeddedOrInjectedProvider = useMemo(() => {
     if (accountProvider === "privy") {
@@ -100,6 +106,8 @@ const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => 
         setKernelAccount,
         embeddedWallet,
         setEmbeddedWallet,
+        intentClient,
+        setIntentClient,
       }}
     >
       <EmbeddedOrInjectedProvider>{children}</EmbeddedOrInjectedProvider>

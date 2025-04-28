@@ -12,14 +12,26 @@ import { createPublicClient, createWalletClient, custom, Hex, http } from "viem"
 import { sepolia } from "viem/chains";
 import { AccountActionsProvider } from "../account-actions-provider";
 import { useAccountWrapperContext } from "../wrapper";
+import { createIntentClient, installIntentExecutor, INTENT_V0_4 } from "@zerodev/intent";
 
+/**
+ * Constants for the Privy account provider
+ */
 const PROVIDER = "privy";
-
 const chain = sepolia;
 
+/**
+ * PrivyAccountProvider is a React component that manages authentication and wallet functionality
+ * using Privy's authentication system. It handles wallet creation, kernel account setup,
+ * and provides authentication UI components.
+ *
+ * @param {Object} props - Component props
+ * @param {React.ReactNode} props.children - Child components to be wrapped
+ * @returns {JSX.Element} The provider component with authentication functionality
+ */
 const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   const [openPrivySignInModal, setOpenPrivySignInModal] = useState(false);
-  const { setKernelAccount, setKernelAccountClient, setEmbeddedWallet } = useAccountWrapperContext();
+  const { setKernelAccount, setKernelAccountClient, setEmbeddedWallet, setIntentClient } = useAccountWrapperContext();
   const { wallets } = useWallets();
   const { user } = usePrivy();
   const { createWallet } = useCreateWallet();
@@ -38,6 +50,10 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     enabled: !!embeddedWallet,
   });
 
+  /**
+   * Creates a wallet client using the embedded wallet's ethereum provider
+   * The configured wallet client or null if not available
+   */
   const walletClient = useMemo(() => {
     if (!ethereumProvider || !embeddedWallet) {
       return null;
@@ -49,6 +65,10 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [embeddedWallet, ethereumProvider]);
 
+  /**
+   * Creates a public client for blockchain interactions
+   * The configured public client or null if wallet client is not available
+   */
   const publicClient = useMemo(() => {
     if (!walletClient) return null;
     return createPublicClient({
@@ -57,6 +77,10 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [walletClient]);
 
+  /**
+   * Creates an ECDSA validator for the kernel account
+   * The configured validator or null if prerequisites are not met
+   */
   const { data: ecdsaValidator } = useQuery({
     queryKey: ["ecdsaValidator", !!publicClient, !!walletClient],
     queryFn: async () => {
@@ -72,6 +96,10 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     enabled: !!publicClient && !!walletClient,
   });
 
+  /**
+   * Creates a kernel account using the ECDSA validator
+   * The configured kernel account or null if prerequisites are not met
+   */
   const { data: kernelAccount } = useQuery({
     queryKey: ["kernel-account", !!publicClient, !!walletClient, !!ecdsaValidator],
     queryFn: async () => {
@@ -101,6 +129,10 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [kernelAccount, setKernelAccount]);
 
+  /**
+   * Creates a paymaster client for handling gas payments
+   * The configured paymaster client or null if public client is not available
+   */
   const paymasterClient = useMemo(() => {
     if (!publicClient) return null;
     return createZeroDevPaymasterClient({
@@ -109,6 +141,10 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [publicClient]);
 
+  /**
+   * Creates a kernel account client for interacting with the kernel account
+   * The configured kernel account client or null if prerequisites are not met
+   */
   const kernelAccountClient = useMemo(() => {
     if (!publicClient || !kernelAccount || !paymasterClient) return null;
     return createKernelAccountClient({
@@ -120,16 +156,52 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [publicClient, kernelAccount, paymasterClient]);
 
+  const { data: kernelIntentAccount } = useQuery({
+    queryKey: ["kernel-intent-account", !!publicClient, !!kernelAccount, !!paymasterClient, !!ecdsaValidator],
+    queryFn: async () => {
+      if (!publicClient || !kernelAccount || !paymasterClient || !ecdsaValidator) return null;
+      return createKernelAccount(publicClient, {
+        plugins: {
+          sudo: ecdsaValidator,
+        },
+        kernelVersion,
+        entryPoint,
+        initConfig: [installIntentExecutor(INTENT_V0_4)],
+      });
+    },
+    enabled: !!publicClient && !!kernelAccount && !!paymasterClient && !!ecdsaValidator,
+  });
+
+  const intentClient = useMemo(() => {
+    if (!kernelIntentAccount) return null;
+    return createIntentClient({
+      chain,
+      account: kernelIntentAccount,
+      bundlerTransport: http(bundlerRpc),
+      version: INTENT_V0_4,
+    });
+  }, [kernelIntentAccount]);
+
   useEffect(() => {
     if (kernelAccountClient) {
       setKernelAccountClient(kernelAccountClient);
     }
-  }, [kernelAccountClient, setKernelAccountClient]);
+    if (intentClient) {
+      setIntentClient(intentClient);
+    }
+  }, [kernelAccountClient, setKernelAccountClient, intentClient, setIntentClient]);
 
+  /**
+   * Handles the sign-in process by opening the Privy sign-in modal
+   */
   const signIn = async () => {
     setOpenPrivySignInModal(true);
   };
 
+  /**
+   * Mutation hook for creating a new embedded wallet
+   * The mutation object with createEmbeddedWallet function
+   */
   const { mutate: createEmbeddedWallet } = useMutation({
     mutationFn: async () => {
       const newEmbeddedWallet = await createWallet();
@@ -145,8 +217,6 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   useEffect(() => {
-    console.log("user", user, "embeddedWallet", embeddedWallet);
-
     if (user) {
       if (!embeddedWallet) {
         createEmbeddedWallet();
@@ -171,6 +241,15 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+/**
+ * PrivySignInModal is a component that handles the email-based authentication flow
+ * using Privy's authentication system.
+ *
+ * @param {Object} props - Component props
+ * @param {boolean} props.openPrivySignInModal - Controls the visibility of the modal
+ * @param {Function} props.setOpenPrivySignInModal - Function to update modal visibility
+ * @returns {JSX.Element} The sign-in modal component
+ */
 const PrivySignInModal = ({
   openPrivySignInModal,
   setOpenPrivySignInModal,
