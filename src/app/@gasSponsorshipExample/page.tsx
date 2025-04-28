@@ -2,17 +2,14 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { useAccountActions } from "@/context/account-actions-provider";
 import { useAccountWrapperContext } from "@/context/wrapper";
-import { chain } from "@/lib/constants";
-import { SCOPE_URL } from "@/lib/constants";
+import { chain, SCOPE_URL } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { zeroAddress } from "viem";
 
 const GasSponsorshipExample = () => {
-  const { accountProvider, embeddedWallet, kernelAccountClient } = useAccountWrapperContext();
-  const { signIn } = useAccountActions();
+  const { embeddedWallet, kernelAccountClient } = useAccountWrapperContext();
 
   const {
     mutate: sendTransaction,
@@ -43,23 +40,12 @@ const GasSponsorshipExample = () => {
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
       <h4 className="text-lg font-medium">Sponsor a Transaction</h4>
 
-      {!embeddedWallet ? (
-        <Button
-          className="absolute right-0 -bottom-4 w-full"
-          onClick={() => signIn()}
-        >
-          Sign In With <span className="capitalize">{accountProvider}</span>
-        </Button>
-      ) : null}
-
       <div
         className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
         aria-disabled={!embeddedWallet}
       >
         <div className="flex items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">
-            Send 0 ETH to {zeroAddress.slice(0, 6)}...{zeroAddress.slice(-4)}
-          </Badge>
+          <Badge className="h-9 text-sm font-medium">Mint 0DEV Token</Badge>
         </div>
 
         <Button

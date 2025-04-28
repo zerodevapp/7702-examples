@@ -5,13 +5,27 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountActions } from "@/context/account-actions-provider";
 import { useAccountWrapperContext } from "@/context/wrapper";
-import { SCOPE_URL } from "@/lib/constants";
+import { ZDEV_DECIMALS, SCOPE_URL, TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
+import { useState } from "react";
 import { toast } from "sonner";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, parseUnits } from "viem";
+import { useBalance } from "wagmi";
+
 const BatchingExample = () => {
   const {} = useAccountActions();
-  const { embeddedWallet, kernelAccountClient } = useAccountWrapperContext();
+  const { kernelAccountClient } = useAccountWrapperContext();
+
+  const [amount, setAmount] = useState("");
+  const [toAddress, setToAddress] = useState("");
+
+  const { data: balance } = useBalance({
+    address: kernelAccountClient?.account?.address,
+    token: TOKEN_ADDRESS,
+    query: {
+      refetchInterval: 5000,
+    },
+  });
 
   const {
     mutate: sendTransaction,
@@ -21,8 +35,6 @@ const BatchingExample = () => {
     mutationKey: ["batching sendUserOperation"],
     mutationFn: async () => {
       if (!kernelAccountClient?.account) throw new Error("No account found");
-
-      const TOKEN_ADDRESS = "0x3Ad1E36CCC4d781bf73E24533943c745E50c569b";
 
       return kernelAccountClient?.sendUserOperation({
         account: kernelAccountClient.account,
@@ -42,7 +54,7 @@ const BatchingExample = () => {
                 },
               ],
               functionName: "mint",
-              args: [kernelAccountClient.account.address, BigInt(1000000)],
+              args: [kernelAccountClient.account.address, parseUnits(amount, ZDEV_DECIMALS)],
             }),
           },
           {
@@ -60,7 +72,7 @@ const BatchingExample = () => {
                 },
               ],
               functionName: "transfer",
-              args: ["0x65A49dF64216bE58F8851A553863658dB7Fe301F", BigInt(1000000)],
+              args: [toAddress, parseUnits(amount, ZDEV_DECIMALS)],
             }),
           },
         ],
@@ -75,27 +87,20 @@ const BatchingExample = () => {
       console.error(error);
     },
   });
+
   return (
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
       <h4 className="text-lg font-medium">Batching Multiple Transactions</h4>
 
-      <div className="bg-primary hover:bg-primary text-background absolute right-0 -bottom-4 flex h-8 w-full items-center justify-evenly text-sm hover:shadow-none">
-        <span>
-          Privy: {embeddedWallet?.address.slice(0, 6)}...{embeddedWallet?.address.slice(-4)}
-        </span>
-        <span>|</span>
-        <span>7702 Deployed: Yes</span>
-      </div>
-
       <div className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4">
         <div className="flex items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">1. Mint Token</Badge>
+          <Badge className="h-9 text-sm font-medium">1. Mint 0DEV</Badge>
           <Input
             className="bg-background"
             type="text"
-            placeholder="Token Symbol"
-            value="ZeroDev"
-            disabled={true}
+            placeholder="Amount"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
           />
         </div>
         <div className="flex items-center gap-2">
@@ -103,11 +108,15 @@ const BatchingExample = () => {
           <Input
             className="bg-background"
             type="text"
-            placeholder="Amount"
-            value="1000000"
-            disabled={true}
+            placeholder="To Address"
+            value={toAddress}
+            onChange={(e) => setToAddress(e.target.value)}
           />
         </div>
+
+        <p className="text-sm">
+          Balance: {balance?.value.toString()} {balance?.symbol}
+        </p>
 
         <Button
           disabled={isPending}

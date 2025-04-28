@@ -3,8 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { bundlerRpc, entryPoint, kernelAddresses, kernelVersion, paymasterRpc } from "@/lib/constants";
-import { useLoginWithEmail, usePrivy, useSignAuthorization, useWallets } from "@privy-io/react-auth";
-import { useQuery } from "@tanstack/react-query";
+import { useCreateWallet, useLoginWithEmail, usePrivy, useSignAuthorization, useWallets } from "@privy-io/react-auth";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo, useState } from "react";
@@ -22,6 +22,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   const { setKernelAccount, setKernelAccountClient, setEmbeddedWallet } = useAccountWrapperContext();
   const { wallets } = useWallets();
   const { user } = usePrivy();
+  const { createWallet } = useCreateWallet();
 
   const embeddedWallet = useMemo(() => {
     return wallets.find((wallet) => wallet.walletClientType === "privy");
@@ -129,17 +130,35 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     setOpenPrivySignInModal(true);
   };
 
+  const { mutate: createEmbeddedWallet } = useMutation({
+    mutationFn: async () => {
+      const newEmbeddedWallet = await createWallet();
+      return newEmbeddedWallet;
+    },
+    onSuccess: (data) => {
+      setEmbeddedWallet({
+        provider: "privy",
+        address: data.address,
+        user: user?.email?.address ?? "",
+      });
+    },
+  });
+
   useEffect(() => {
     console.log("user", user, "embeddedWallet", embeddedWallet);
 
     if (user) {
-      setEmbeddedWallet({
-        provider: "privy",
-        address: embeddedWallet?.address ?? "",
-        is7702Initialized: false,
-      });
+      if (!embeddedWallet) {
+        createEmbeddedWallet();
+      } else {
+        setEmbeddedWallet({
+          provider: "privy",
+          address: embeddedWallet?.address ?? "",
+          user: user?.email?.address ?? "",
+        });
+      }
     }
-  }, [user, embeddedWallet, setEmbeddedWallet]);
+  }, [user, embeddedWallet, setEmbeddedWallet, createEmbeddedWallet]);
 
   return (
     <>

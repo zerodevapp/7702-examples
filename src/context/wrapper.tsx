@@ -3,6 +3,8 @@ import { PrivyProvider } from "@privy-io/react-auth";
 import { CreateKernelAccountReturnType, KernelAccountClient } from "@zerodev/sdk";
 import React, { createContext, useContext, useMemo, useState } from "react";
 import PrivyAccountProvider from "./account-providers/privy-account-provider";
+import { createConfig, http, WagmiProvider } from "wagmi";
+import { baseSepolia, sepolia } from "viem/chains";
 
 export const accountProviders = ["privy", "dynamic", "turnkey", "browser"] as const;
 export type AccountProviders = (typeof accountProviders)[number];
@@ -30,8 +32,16 @@ export const AccountProviderContext = createContext<{
 type EmbeddedWallet = {
   provider: "privy" | "dynamic" | "turnkey" | "browser";
   address: string;
-  is7702Initialized: boolean;
+  user: string;
 };
+
+const wagmiConfig = createConfig({
+  chains: [sepolia, baseSepolia],
+  transports: {
+    [sepolia.id]: http(),
+    [baseSepolia.id]: http(),
+  },
+});
 
 const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => {
   const [accountProvider, setAccountProvider] = useState<AccountProviders>("privy");
@@ -42,19 +52,21 @@ const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => 
   const EmbeddedOrInjectedProvider = useMemo(() => {
     if (accountProvider === "privy") {
       const PrivyProviderWrapper = ({ children }: { children: React.ReactNode }) => (
-        <PrivyProvider
-          appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
-          clientId={process.env.NEXT_PUBLIC_CLIENT_ID}
-          config={{
-            // Create embedded wallets for users who don't have a wallet
-            embeddedWallets: {
-              showWalletUIs: true,
-              createOnLogin: "all-users",
-            },
-          }}
-        >
-          <PrivyAccountProvider>{children}</PrivyAccountProvider>
-        </PrivyProvider>
+        <WagmiProvider config={wagmiConfig}>
+          <PrivyProvider
+            appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
+            clientId={process.env.NEXT_PUBLIC_CLIENT_ID}
+            config={{
+              // Create embedded wallets for users who don't have a wallet
+              embeddedWallets: {
+                showWalletUIs: true,
+                createOnLogin: "all-users",
+              },
+            }}
+          >
+            <PrivyAccountProvider>{children}</PrivyAccountProvider>
+          </PrivyProvider>
+        </WagmiProvider>
       );
       return PrivyProviderWrapper;
     }

@@ -17,6 +17,7 @@ export default function Home() {
     embeddedWallet,
   } = useAccountWrapperContext();
   const { signIn, signAuthorization } = useAccountActions();
+
   return (
     <>
       <section className="space-y-8">
@@ -156,14 +157,16 @@ export default function Home() {
               </Button>
             </div>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => {
-              signIn();
-            }}
-          >
-            Sign In with <span className="capitalize">{selectedProvider}</span>
-          </Button>
+          {!embeddedWallet ? (
+            <Button
+              variant="outline"
+              onClick={() => {
+                signIn();
+              }}
+            >
+              Sign In with <span className="capitalize">{selectedProvider}</span>
+            </Button>
+          ) : null}
 
           {/* 7702 status and provider details of the account */}
           {embeddedWallet && (
@@ -177,9 +180,11 @@ export default function Home() {
                 )}
               </div>
 
+              <p>User: {embeddedWallet?.user}</p>
               <p>
                 Address:{" "}
                 <a
+                  target="_blank"
                   className="font-medium underline underline-offset-2"
                   href={`${SCOPE_URL}/address/${kernelAccount?.address}`}
                 >
