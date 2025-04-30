@@ -95,7 +95,7 @@ const BatchingExample = () => {
 
       <div className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4">
         <div className="flex items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">1. Mint 0DEV</Badge>
+          <Badge className="h-9 text-sm font-medium">1. Mint ZDEV</Badge>
           <Input
             className="bg-background"
             type="text"

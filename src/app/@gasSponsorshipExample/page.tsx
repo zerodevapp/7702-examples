@@ -62,7 +62,7 @@ const GasSponsorshipExample = () => {
         aria-disabled={!embeddedWallet}
       >
         <div className="flex items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">Mint 0DEV Token</Badge>
+          <Badge className="h-9 text-sm font-medium">Mint ZDEV Token</Badge>
           <Input
             className="bg-background"
             type="text"

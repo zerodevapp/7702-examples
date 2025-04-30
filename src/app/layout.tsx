@@ -92,8 +92,12 @@ export default function RootLayout({
                   key="batching"
                   description={
                     <p className="px-6">
-                      This example demonstrates how to use the Privy SDK to create a new account, sign in with an email,
-                      and send a user operation.
+                      When you need to send multiple transactions, you can batch them together to save on gas fees and
+                      the number of times a user needs to sign.
+                      <br />
+                      <br />
+                      Each call in the example below that would have been a separate transaction is batched together and
+                      sent as a single user operation.
                     </p>
                   }
                 />
@@ -108,8 +112,13 @@ export default function RootLayout({
                   key="permissions"
                   description={
                     <p className="px-6">
-                      This example demonstrates how to use the Privy SDK to create a new account, sign in with an email,
-                      and send a user operation.
+                      Permissions allow you to have a finer control over how users interact with their smart wallet. You
+                      can create new (session keys) signers for the smart account, and revoke them when the session
+                      ends.
+                      <br />
+                      <br />
+                      You can create signers which can have certain policies like which contract they can call, what
+                      functions they can call and signer customisation (ECDSA, WebAuthn).
                     </p>
                   }
                 />
@@ -123,8 +132,11 @@ export default function RootLayout({
                   key="chain-abstraction"
                   description={
                     <p className="px-6">
-                      This example demonstrates how to use the Privy SDK to create a new account, sign in with an email,
-                      and send a user operation.
+                      Chain abstraction allows spending from multiple chains with a single user operation. This example
+                      demonstrates how to spend USDC from Base Sepolia and swap to ZDEV token on Sepolia.
+                      <br />
+                      <br />
+                      Chain abstracted balances eliminate the need to track and maintain balances on multiple chains.
                     </p>
                   }
                 />

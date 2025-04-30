@@ -12,7 +12,6 @@ import { createPublicClient, createWalletClient, custom, Hex, http } from "viem"
 import { sepolia } from "viem/chains";
 import { AccountActionsProvider } from "../account-actions-provider";
 import { useAccountWrapperContext } from "../wrapper";
-import { createIntentClient, installIntentExecutor, INTENT_V0_4 } from "@zerodev/intent";
 
 /**
  * Constants for the Privy account provider
@@ -31,15 +30,16 @@ const chain = sepolia;
  */
 const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   const [openPrivySignInModal, setOpenPrivySignInModal] = useState(false);
-  const { setKernelAccount, setKernelAccountClient, setEmbeddedWallet, setIntentClient } = useAccountWrapperContext();
+  const { setKernelAccount, setKernelAccountClient, setEmbeddedWallet, setPublicClient, setEcdsaValidator } =
+    useAccountWrapperContext();
   const { wallets } = useWallets();
   const { user } = usePrivy();
   const { createWallet } = useCreateWallet();
+  const { signAuthorization } = useSignAuthorization();
 
   const embeddedWallet = useMemo(() => {
     return wallets.find((wallet) => wallet.walletClientType === "privy");
   }, [wallets]);
-  const { signAuthorization } = useSignAuthorization();
 
   const { data: ethereumProvider } = useQuery({
     queryKey: [PROVIDER, "ethereumProvider", !!embeddedWallet],
@@ -77,6 +77,12 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [walletClient]);
 
+  useEffect(() => {
+    if (publicClient) {
+      setPublicClient(publicClient);
+    }
+  }, [publicClient, setPublicClient]);
+
   /**
    * Creates an ECDSA validator for the kernel account
    * The configured validator or null if prerequisites are not met
@@ -85,7 +91,6 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     queryKey: ["ecdsaValidator", !!publicClient, !!walletClient],
     queryFn: async () => {
       if (!walletClient || !publicClient) return null;
-      console.log("CREATING ECDSA VALIDATOR", walletClient);
 
       return signerToEcdsaValidator(publicClient, {
         signer: walletClient,
@@ -95,6 +100,34 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     },
     enabled: !!publicClient && !!walletClient,
   });
+
+  // const { data: webAuthnKey } = useQuery({
+  //   queryKey: ["webAuthnKey"],
+  //   queryFn: async () => {
+  //     return await toWebAuthnKey({
+  //       passkeyName: "7702 Examples Passkey",
+  //       passkeyServerUrl: "https://passkeys.zerodev.app/api/v3/fefe0be1-b3db-4eff-bbb7-750485bd732c",
+  //       mode: WebAuthnMode.Register,
+  //       passkeyServerHeaders: {},
+  //     });
+  //   },
+  // });
+
+  // const { data: passkeyValidator } = useQuery({
+  //   queryKey: ["passkeyValidator"],
+  //   queryFn: async () => {
+  //     if (!webAuthnKey) return null;
+  //     if (!publicClient) return null;
+
+  //     return await toPasskeyValidator(publicClient, {
+  //       webAuthnKey,
+  //       entryPoint: entryPoint,
+  //       kernelVersion: kernelVersion,
+  //       validatorContractVersion: PasskeyValidatorContractVersion.V0_0_2,
+  //     });
+  //   },
+  //   enabled: !!webAuthnKey && !!publicClient,
+  // });
 
   /**
    * Creates a kernel account using the ECDSA validator
@@ -118,11 +151,15 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         kernelVersion,
         address: walletClient!.account.address,
         eip7702Auth: authorization,
+        pluginMigrations: [
+          // getIntentExecutorPluginData
+        ],
       });
     },
     enabled: !!publicClient && !!walletClient && !!ecdsaValidator,
     retry: false,
   });
+
   useEffect(() => {
     if (kernelAccount) {
       setKernelAccount(kernelAccount);
@@ -154,42 +191,49 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       paymaster: paymasterClient,
       client: publicClient,
     });
+    // TODO: send empty userops on both chains (base, sepolia)
+    // for installing the intent executor plugin
   }, [publicClient, kernelAccount, paymasterClient]);
 
-  const { data: kernelIntentAccount } = useQuery({
-    queryKey: ["kernel-intent-account", !!publicClient, !!kernelAccount, !!paymasterClient, !!ecdsaValidator],
-    queryFn: async () => {
-      if (!publicClient || !kernelAccount || !paymasterClient || !ecdsaValidator) return null;
-      return createKernelAccount(publicClient, {
-        plugins: {
-          sudo: ecdsaValidator,
-        },
-        kernelVersion,
-        entryPoint,
-        initConfig: [installIntentExecutor(INTENT_V0_4)],
-      });
-    },
-    enabled: !!publicClient && !!kernelAccount && !!paymasterClient && !!ecdsaValidator,
-  });
+  useEffect(() => {
+    if (ecdsaValidator) {
+      setEcdsaValidator(ecdsaValidator);
+    }
+  }, [ecdsaValidator, setEcdsaValidator]);
 
-  const intentClient = useMemo(() => {
-    if (!kernelIntentAccount) return null;
-    return createIntentClient({
-      chain,
-      account: kernelIntentAccount,
-      bundlerTransport: http(bundlerRpc),
-      version: INTENT_V0_4,
-    });
-  }, [kernelIntentAccount]);
+  // const { data: kernelIntentAccount } = useQuery({
+  //   queryKey: ["kernel-intent-account", !!publicClient, !!kernelAccount, !!paymasterClient, !!ecdsaValidator],
+  //   queryFn: async () => {
+  //     if (!publicClient || !walletClient) return null;
+  //     return create7702KernelAccount(publicClient, {
+  //       kernelVersion,
+  //       entryPoint,
+  //       signer: walletClient!,
+  //       // initConfig: [installIntentExecutor(INTENT_V0_4)],
+  //       plugins
+  //     });
+  //   },
+  //   enabled: !!publicClient && !!kernelAccount && !!paymasterClient && !!ecdsaValidator,
+  // });
+
+  // const intentClient = useMemo(() => {
+  //   if (!kernelIntentAccount) return null;
+  //   return createIntentClient({
+  //     chain,
+  //     account: kernelIntentAccount,
+  //     bundlerTransport: http(bundlerRpc),
+  //     version: INTENT_V0_4,
+  //   });
+  // }, [kernelIntentAccount]);
 
   useEffect(() => {
     if (kernelAccountClient) {
       setKernelAccountClient(kernelAccountClient);
     }
-    if (intentClient) {
-      setIntentClient(intentClient);
-    }
-  }, [kernelAccountClient, setKernelAccountClient, intentClient, setIntentClient]);
+    // if (intentClient) {
+    //   setIntentClient(intentClient);
+    // }
+  }, [kernelAccountClient, setKernelAccountClient]);
 
   /**
    * Handles the sign-in process by opening the Privy sign-in modal

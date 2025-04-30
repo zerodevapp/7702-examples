@@ -17,11 +17,11 @@ const ChainAbstractionExample = () => {
 
   const [amount, setAmount] = useState("");
 
-  const { data: cab } = useQuery({
+  const { data: cab, refetch: refetchCAB } = useQuery({
     queryKey: ["usdc-balance", kernelAccountClient?.account?.address],
     queryFn: async () => {
       if (!intentClient) return null;
-      return intentClient.getCAB({
+      const cab = await intentClient.getCAB({
         // Specify any networks you want to aggregate.
         // If you skip this flag, it will aggregate from all the networks we support, but it may be slower.
         networks: [sepolia.id, baseSepolia.id],
@@ -30,18 +30,12 @@ const ChainAbstractionExample = () => {
         // If you skip this flag, it will return all the tokens we support, but it may be slower.
         tokenTickers: ["USDC"],
       });
+
+      return cab.tokens.reduce((acc, token) => {
+        return acc + BigInt(token.amount);
+      }, BigInt(0));
     },
     enabled: !!intentClient,
-  });
-  console.log("cab", cab);
-
-  const { data: usdcBalance, refetch: refetchUSDCBalance } = useBalance({
-    address: kernelAccountClient?.account?.address,
-    token: BASE_USDC_ADDRESS,
-    chainId: baseSepolia.id,
-    query: {
-      refetchInterval: 5000,
-    },
   });
 
   const { data: tokenBalance } = useBalance({
@@ -159,7 +153,7 @@ const ChainAbstractionExample = () => {
       return data;
     },
     onSuccess: () => {
-      refetchUSDCBalance();
+      refetchCAB();
       toast.success("USDC requested successfully");
     },
     onError: (error) => {
@@ -183,7 +177,7 @@ const ChainAbstractionExample = () => {
 
       <div className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">1. Swap USDC (Base) to 0DEV (Sepolia)</Badge>
+          <Badge className="h-9 text-sm font-medium">1. Swap USDC (Base) to ZDEV (Sepolia)</Badge>
           <Input
             className="bg-background"
             type="text"
@@ -193,11 +187,9 @@ const ChainAbstractionExample = () => {
           />
         </div>
 
+        <p className="text-sm">USDC (Base) Balance: {formatUnits(cab ?? BigInt(0), 18)} </p>
         <p className="text-sm">
-          USDC (Base) Balance: {formatUnits(usdcBalance?.value ?? BigInt(0), usdcBalance?.decimals ?? 18)}{" "}
-        </p>
-        <p className="text-sm">
-          0DEV (Sepolia) Balance: {formatUnits(tokenBalance?.value ?? BigInt(0), tokenBalance?.decimals ?? 18)}{" "}
+          ZDEV (Sepolia) Balance: {formatUnits(tokenBalance?.value ?? BigInt(0), tokenBalance?.decimals ?? 18)}{" "}
         </p>
 
         <Button

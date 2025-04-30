@@ -16,7 +16,7 @@ export default function Home() {
     setAccountProvider: setSelectedProvider,
     embeddedWallet,
   } = useAccountWrapperContext();
-  const { signIn, signAuthorization } = useAccountActions();
+  const { signIn } = useAccountActions();
 
   return (
     <>
@@ -196,22 +196,11 @@ export default function Home() {
                 <a
                   target="_blank"
                   className="font-medium underline underline-offset-2"
-                  href={`${SCOPE_URL}/address/${kernelAccount?.eip7702Auth?.address}`}
+                  href={`${SCOPE_URL}/address/${kernelAccount?.accountImplementationAddress}`}
                 >
-                  {kernelAccount?.eip7702Auth?.address}
+                  {kernelAccount?.accountImplementationAddress}
                 </a>
               </p>
-
-              {!kernelAccount?.isDeployed ? (
-                <Button
-                  variant="outline"
-                  onClick={() => {
-                    signAuthorization();
-                  }}
-                >
-                  Upgrade <span className="capitalize">{selectedProvider}</span> Account to 7702 account
-                </Button>
-              ) : null}
             </div>
           )}
         </div>

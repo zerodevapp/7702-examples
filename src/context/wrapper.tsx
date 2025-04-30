@@ -1,11 +1,12 @@
 "use client";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { CreateKernelAccountReturnType, KernelAccountClient } from "@zerodev/sdk";
+import { CreateKernelAccountReturnType, KernelAccountClient, KernelValidator } from "@zerodev/sdk";
 import React, { createContext, useContext, useMemo, useState } from "react";
 import PrivyAccountProvider from "./account-providers/privy-account-provider";
 import { createConfig, http, WagmiProvider } from "wagmi";
 import { baseSepolia, sepolia } from "viem/chains";
 import { IntentClient } from "@zerodev/intent";
+import { PublicClient } from "viem";
 
 export const accountProviders = ["privy", "dynamic", "turnkey", "browser"] as const;
 export type AccountProviders = (typeof accountProviders)[number];
@@ -21,6 +22,10 @@ export const AccountProviderContext = createContext<{
   setEmbeddedWallet: (embeddedWallet: EmbeddedWallet | null) => void;
   intentClient: IntentClient | null;
   setIntentClient: (intentClient: IntentClient | null) => void;
+  publicClient: PublicClient | null;
+  setPublicClient: (publicClient: PublicClient | null) => void;
+  ecdsaValidator: KernelValidator<"ECDSAValidator"> | null;
+  setEcdsaValidator: (ecdsaValidator: KernelValidator<"ECDSAValidator"> | null) => void;
 }>({
   accountProvider: "privy",
   setAccountProvider: () => {},
@@ -32,6 +37,10 @@ export const AccountProviderContext = createContext<{
   setEmbeddedWallet: () => {},
   intentClient: null,
   setIntentClient: () => {},
+  publicClient: null,
+  setPublicClient: () => {},
+  ecdsaValidator: null,
+  setEcdsaValidator: () => {},
 });
 
 type EmbeddedWallet = {
@@ -51,9 +60,11 @@ const wagmiConfig = createConfig({
 const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => {
   const [accountProvider, setAccountProvider] = useState<AccountProviders>("privy");
   const [embeddedWallet, setEmbeddedWallet] = useState<EmbeddedWallet | null>(null);
+  const [ecdsaValidator, setEcdsaValidator] = useState<KernelValidator<"ECDSAValidator"> | null>(null);
   const [kernelAccountClient, setKernelAccountClient] = useState<KernelAccountClient | null>(null);
   const [kernelAccount, setKernelAccount] = useState<CreateKernelAccountReturnType | null>(null);
   const [intentClient, setIntentClient] = useState<IntentClient | null>(null);
+  const [publicClient, setPublicClient] = useState<PublicClient | null>(null);
 
   const EmbeddedOrInjectedProvider = useMemo(() => {
     if (accountProvider === "privy") {
@@ -108,6 +119,10 @@ const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => 
         setEmbeddedWallet,
         intentClient,
         setIntentClient,
+        publicClient,
+        setPublicClient,
+        ecdsaValidator,
+        setEcdsaValidator,
       }}
     >
       <EmbeddedOrInjectedProvider>{children}</EmbeddedOrInjectedProvider>
