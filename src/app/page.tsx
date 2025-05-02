@@ -3,20 +3,18 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import Heading from "@/components/ui/heading";
-import { useAccountActions } from "@/context/account-actions-provider";
+import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { useAccountWrapperContext } from "@/context/wrapper";
-import { SCOPE_URL } from "@/lib/constants";
+import { kernelAddresses, EXPLORER_URL } from "@/lib/constants";
+import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
+import { UserPill as PrivyUserPill } from "@privy-io/react-auth/ui";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
 export default function Home() {
-  const {
-    accountProvider: selectedProvider,
-    kernelAccount,
-    setAccountProvider: setSelectedProvider,
-    embeddedWallet,
-  } = useAccountWrapperContext();
-  const { signIn } = useAccountActions();
+  const { accountProvider: selectedProvider, setAccountProvider: setSelectedProvider } = useAccountWrapperContext();
+
+  const { login, embeddedWallet, isDeployed } = useAccountProviderContext();
 
   return (
     <>
@@ -158,14 +156,20 @@ export default function Home() {
             </div>
           </div>
           {!embeddedWallet ? (
-            <Button
-              variant="outline"
-              onClick={() => {
-                signIn();
-              }}
-            >
-              Sign In with <span className="capitalize">{selectedProvider}</span>
-            </Button>
+            <>
+              {selectedProvider === "dynamic" ? (
+                <DynamicWidget />
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    login();
+                  }}
+                >
+                  Sign In with <span className="capitalize">{selectedProvider}</span>
+                </Button>
+              )}
+            </>
           ) : null}
 
           {/* 7702 status and provider details of the account */}
@@ -173,7 +177,7 @@ export default function Home() {
             <div className="space-y-2 rounded-md border-2 p-4">
               <div className="flex items-center gap-2">
                 <span className="font-mono text-lg font-medium">Account Status</span>
-                {kernelAccount?.isDeployed ? (
+                {isDeployed ? (
                   <Badge variant="default">Deployed</Badge>
                 ) : (
                   <Badge variant="secondary">Not Deployed</Badge>
@@ -186,21 +190,27 @@ export default function Home() {
                 <a
                   target="_blank"
                   className="font-medium underline underline-offset-2"
-                  href={`${SCOPE_URL}/address/${kernelAccount?.address}`}
+                  href={`${EXPLORER_URL}/address/${embeddedWallet?.address}`}
                 >
                   {embeddedWallet?.address}
                 </a>
               </p>
               <p>
-                EIP7702 Auth:{" "}
+                Account Implementation:{" "}
                 <a
                   target="_blank"
                   className="font-medium underline underline-offset-2"
-                  href={`${SCOPE_URL}/address/${kernelAccount?.accountImplementationAddress}`}
+                  href={`${EXPLORER_URL}/address/${kernelAddresses.accountImplementationAddress}`}
                 >
-                  {kernelAccount?.accountImplementationAddress}
+                  {kernelAddresses.accountImplementationAddress}
                 </a>
               </p>
+
+              {selectedProvider === "privy" ? (
+                <PrivyUserPill />
+              ) : selectedProvider === "dynamic" ? (
+                <DynamicWidget />
+              ) : null}
             </div>
           )}
         </div>

@@ -3,8 +3,9 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { useAccountWrapperContext } from "@/context/wrapper";
-import { BASE_USDC_ADDRESS, SCOPE_URL, SEPOLIA_USDC_ADDRESS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
+import { BASE_USDC_ADDRESS, EXPLORER_URL, SEPOLIA_USDC_ADDRESS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { ZERODEV_TOKEN_ABI } from "@/lib/constants/zeroDevTokenAbi";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -13,9 +14,10 @@ import { encodeFunctionData, erc20Abi, formatUnits, parseUnits } from "viem";
 import { baseSepolia, sepolia } from "viem/chains";
 import { useBalance } from "wagmi";
 const ChainAbstractionExample = () => {
-  const { kernelAccountClient, intentClient } = useAccountWrapperContext();
+  const { kernelAccountClient, intentClient } = useAccountProviderContext();
 
   const [amount, setAmount] = useState("");
+  const { embeddedWallet } = useAccountProviderContext();
 
   const { data: cab, refetch: refetchCAB } = useQuery({
     queryKey: ["usdc-balance", kernelAccountClient?.account?.address],
@@ -39,7 +41,7 @@ const ChainAbstractionExample = () => {
   });
 
   const { data: tokenBalance } = useBalance({
-    address: kernelAccountClient?.account?.address,
+    address: embeddedWallet?.address,
     token: ZERODEV_TOKEN_ADDRESS,
     chainId: sepolia.id,
     query: {
@@ -47,99 +49,99 @@ const ChainAbstractionExample = () => {
     },
   });
 
-  const {
-    mutate: sendTransaction,
-    isPending,
-    data: intentData,
-  } = useMutation({
-    mutationKey: ["chainAbstraction"],
-    mutationFn: async () => {
-      if (!intentClient) throw new Error("Intent client not found");
-      if (!kernelAccountClient?.account) throw new Error("Kernel account client not found");
+  // const {
+  //   mutate: sendTransaction,
+  //   isPending,
+  //   data: intentData,
+  // } = useMutation({
+  //   mutationKey: ["chainAbstraction"],
+  //   mutationFn: async () => {
+  //     if (!intentClient) throw new Error("Intent client not found");
+  //     if (!kernelAccountClient?.account) throw new Error("Kernel account client not found");
 
-      return intentClient.sendUserIntent({
-        calls: [
-          {
-            to: SEPOLIA_USDC_ADDRESS,
-            value: BigInt(0),
-            data: encodeFunctionData({
-              abi: erc20Abi,
-              functionName: "approve",
-              args: [ZERODEV_TOKEN_ADDRESS, parseUnits(amount, 6)],
-            }),
-          },
-          {
-            to: ZERODEV_TOKEN_ADDRESS,
-            value: BigInt(0),
-            data: encodeFunctionData({
-              abi: ZERODEV_TOKEN_ABI,
-              functionName: "swap",
-              args: [parseUnits(amount, 6), kernelAccountClient.account.address, kernelAccountClient.account.address],
-            }),
-          },
-        ],
-        inputTokens: [
-          {
-            chainId: baseSepolia.id,
-            address: BASE_USDC_ADDRESS,
-            amount: parseUnits(amount, 6),
-          },
-        ],
-        outputTokens: [
-          {
-            chainId: sepolia.id,
-            address: SEPOLIA_USDC_ADDRESS,
-            amount: parseUnits(amount, 6),
-          },
-        ],
-      });
-    },
-  });
+  //     return intentClient.sendUserIntent({
+  //       calls: [
+  //         {
+  //           to: SEPOLIA_USDC_ADDRESS,
+  //           value: BigInt(0),
+  //           data: encodeFunctionData({
+  //             abi: erc20Abi,
+  //             functionName: "approve",
+  //             args: [ZERODEV_TOKEN_ADDRESS, parseUnits(amount, 6)],
+  //           }),
+  //         },
+  //         {
+  //           to: ZERODEV_TOKEN_ADDRESS,
+  //           value: BigInt(0),
+  //           data: encodeFunctionData({
+  //             abi: ZERODEV_TOKEN_ABI,
+  //             functionName: "swap",
+  //             args: [parseUnits(amount, 6), kernelAccountClient.account.address, kernelAccountClient.account.address],
+  //           }),
+  //         },
+  //       ],
+  //       inputTokens: [
+  //         {
+  //           chainId: baseSepolia.id,
+  //           address: BASE_USDC_ADDRESS,
+  //           amount: parseUnits(amount, 6),
+  //         },
+  //       ],
+  //       outputTokens: [
+  //         {
+  //           chainId: sepolia.id,
+  //           address: SEPOLIA_USDC_ADDRESS,
+  //           amount: parseUnits(amount, 6),
+  //         },
+  //       ],
+  //     });
+  //   },
+  // });
 
-  useQuery({
-    queryKey: ["intentStatus", intentData],
-    queryFn: async () => {
-      if (!intentData) return null;
-      if (!intentClient) return null;
+  // useQuery({
+  //   queryKey: ["intentStatus", intentData],
+  //   queryFn: async () => {
+  //     if (!intentData) return null;
+  //     if (!intentClient) return null;
 
-      // Wait for the intent to be opened on all input chains
-      // NOTE: if you just want to wait for the intent to fully resolve, you don't need to wait
-      // for the input intents.  Just wait for the execution intent.
-      await Promise.all(
-        intentData.inputsUiHash.map(async (data) => {
-          const openReceipts = await intentClient.waitForUserIntentOpenReceipt({
-            uiHash: data.uiHash,
-          });
-          console.log(
-            `Intent opened on chain ${openReceipts?.openChainId} with transaction hash: ${openReceipts?.receipt.transactionHash}`,
-          );
-          toast.success(`Intent opened on ${openReceipts?.openChainId}!`);
-        }),
-      );
+  //     // Wait for the intent to be opened on all input chains
+  //     // NOTE: if you just want to wait for the intent to fully resolve, you don't need to wait
+  //     // for the input intents.  Just wait for the execution intent.
+  //     await Promise.all(
+  //       intentData.inputsUiHash.map(async (data) => {
+  //         const openReceipts = await intentClient.waitForUserIntentOpenReceipt({
+  //           uiHash: data.uiHash,
+  //         });
+  //         console.log(
+  //           `Intent opened on chain ${openReceipts?.openChainId} with transaction hash: ${openReceipts?.receipt.transactionHash}`,
+  //         );
+  //         toast.success(`Intent opened on ${openReceipts?.openChainId}!`);
+  //       }),
+  //     );
 
-      // Wait for final execution on the destination chain
-      const receipt = await intentClient.waitForUserIntentExecutionReceipt({
-        uiHash: intentData.outputUiHash.uiHash,
-      });
-      toast.success("Transaction completed successfully");
-      console.log(
-        `Intent executed on chain: ${receipt?.executionChainId} with transaction hash: ${receipt?.receipt.transactionHash}`,
-      );
-    },
-    enabled: Boolean(intentData && intentClient),
-  });
+  //     // Wait for final execution on the destination chain
+  //     const receipt = await intentClient.waitForUserIntentExecutionReceipt({
+  //       uiHash: intentData.outputUiHash.uiHash,
+  //     });
+  //     toast.success("Transaction completed successfully");
+  //     console.log(
+  //       `Intent executed on chain: ${receipt?.executionChainId} with transaction hash: ${receipt?.receipt.transactionHash}`,
+  //     );
+  //   },
+  //   enabled: Boolean(intentData && intentClient),
+  // });
 
   const { mutate: requestUSDC } = useMutation({
     mutationKey: ["requestUSDC"],
     mutationFn: async () => {
-      if (!kernelAccountClient) throw new Error("Kernel account client not found");
+      if (!embeddedWallet) throw new Error("Embedded wallet not found");
       const res = await fetch("/api/faucet", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          destinationAddress: kernelAccountClient?.account?.address,
+          destinationAddress: embeddedWallet.address,
         }),
       });
 
@@ -153,7 +155,7 @@ const ChainAbstractionExample = () => {
       return data;
     },
     onSuccess: () => {
-      refetchCAB();
+      // refetchCAB();
       toast.success("USDC requested successfully");
     },
     onError: (error) => {
@@ -187,12 +189,12 @@ const ChainAbstractionExample = () => {
           />
         </div>
 
-        <p className="text-sm">USDC (Base) Balance: {formatUnits(cab ?? BigInt(0), 18)} </p>
+        {/* <p className="text-sm">USDC (Base) Balance: {formatUnits(cab ?? BigInt(0), 18)} </p> */}
         <p className="text-sm">
           ZDEV (Sepolia) Balance: {formatUnits(tokenBalance?.value ?? BigInt(0), tokenBalance?.decimals ?? 18)}{" "}
         </p>
 
-        <Button
+        {/* <Button
           disabled={isPending}
           onClick={() => sendTransaction()}
         >
@@ -208,7 +210,7 @@ const ChainAbstractionExample = () => {
           >
             View Destination Transaction
           </a>
-        )}
+        )} */}
       </div>
     </div>
   );

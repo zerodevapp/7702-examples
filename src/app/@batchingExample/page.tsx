@@ -3,24 +3,23 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAccountActions } from "@/context/account-actions-provider";
-import { useAccountWrapperContext } from "@/context/wrapper";
-import { ZERODEV_DECIMALS, SCOPE_URL, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
+import { useAccountProviderContext } from "@/context/account-providers/provider-context";
+import { EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, formatUnits, parseUnits } from "viem";
-import { useBalance } from "wagmi";
 import { sepolia } from "viem/chains";
+import { useBalance } from "wagmi";
+
 const BatchingExample = () => {
-  const {} = useAccountActions();
-  const { kernelAccountClient } = useAccountWrapperContext();
+  const { sendUserOperationMutation, embeddedWallet } = useAccountProviderContext();
 
   const [amount, setAmount] = useState("");
   const [toAddress, setToAddress] = useState("");
 
   const { data: balance } = useBalance({
-    address: kernelAccountClient?.account?.address,
+    address: embeddedWallet?.address,
     token: ZERODEV_TOKEN_ADDRESS,
     query: {
       refetchInterval: 5000,
@@ -35,48 +34,49 @@ const BatchingExample = () => {
   } = useMutation({
     mutationKey: ["batching sendUserOperation"],
     mutationFn: async () => {
-      if (!kernelAccountClient?.account) throw new Error("No account found");
+      if (!embeddedWallet) throw new Error("No embedded wallet found");
 
-      return kernelAccountClient?.sendUserOperation({
-        account: kernelAccountClient.account,
-        calls: [
-          {
-            to: ZERODEV_TOKEN_ADDRESS,
-            value: BigInt(0),
-            data: encodeFunctionData({
-              abi: [
-                {
-                  name: "mint",
-                  type: "function",
-                  inputs: [
-                    { name: "to", type: "address" },
-                    { name: "amount", type: "uint256" },
-                  ],
-                },
-              ],
-              functionName: "mint",
-              args: [kernelAccountClient.account.address, parseUnits(amount, ZERODEV_DECIMALS)],
-            }),
-          },
-          {
-            to: ZERODEV_TOKEN_ADDRESS,
-            value: BigInt(0),
-            data: encodeFunctionData({
-              abi: [
-                {
-                  name: "transfer",
-                  type: "function",
-                  inputs: [
-                    { name: "to", type: "address" },
-                    { name: "amount", type: "uint256" },
-                  ],
-                },
-              ],
-              functionName: "transfer",
-              args: [toAddress, parseUnits(amount, ZERODEV_DECIMALS)],
-            }),
-          },
-        ],
+      return sendUserOperationMutation({
+        userOperation: {
+          calls: [
+            {
+              to: ZERODEV_TOKEN_ADDRESS,
+              value: BigInt(0),
+              data: encodeFunctionData({
+                abi: [
+                  {
+                    name: "mint",
+                    type: "function",
+                    inputs: [
+                      { name: "to", type: "address" },
+                      { name: "amount", type: "uint256" },
+                    ],
+                  },
+                ],
+                functionName: "mint",
+                args: [embeddedWallet.address, parseUnits(amount, ZERODEV_DECIMALS)],
+              }),
+            },
+            {
+              to: ZERODEV_TOKEN_ADDRESS,
+              value: BigInt(0),
+              data: encodeFunctionData({
+                abi: [
+                  {
+                    name: "transfer",
+                    type: "function",
+                    inputs: [
+                      { name: "to", type: "address" },
+                      { name: "amount", type: "uint256" },
+                    ],
+                  },
+                ],
+                functionName: "transfer",
+                args: [toAddress, parseUnits(amount, ZERODEV_DECIMALS)],
+              }),
+            },
+          ],
+        },
       });
     },
     onSuccess: (data) => {
@@ -128,7 +128,7 @@ const BatchingExample = () => {
 
         {txHash && (
           <a
-            href={`${SCOPE_URL}/op/${txHash}`}
+            href={`${EXPLORER_URL}/op/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary text-sm underline underline-offset-4"

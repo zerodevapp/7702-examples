@@ -3,28 +3,29 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAccountWrapperContext } from "@/context/wrapper";
-import { chain, SCOPE_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
+import { useAccountProviderContext } from "@/context/account-providers/provider-context";
+import { CHAIN, EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, parseUnits } from "viem";
 
 const GasSponsorshipExample = () => {
-  const { embeddedWallet, kernelAccountClient } = useAccountWrapperContext();
-
+  const { embeddedWallet, kernelAccount, kernelAccountClient } = useAccountProviderContext();
   const [amount, setAmount] = useState("");
 
   const {
-    mutate: sendTransaction,
+    mutate: sendSponsoredTransaction,
     isPending,
     data: txHash,
   } = useMutation({
     mutationKey: ["gasSponsorship sendTransaction"],
     mutationFn: async () => {
-      if (!kernelAccountClient?.account) throw new Error("No account found");
-      return kernelAccountClient?.sendTransaction({
-        account: kernelAccountClient.account,
+      if (!embeddedWallet) throw new Error("No embedded wallet found");
+      if (!kernelAccountClient) throw new Error("No kernel client found");
+      if (!kernelAccount) throw new Error("No kernel account found");
+      return kernelAccountClient.sendTransaction({
+        account: kernelAccount,
         to: ZERODEV_TOKEN_ADDRESS,
         value: BigInt(0),
         data: encodeFunctionData({
@@ -39,10 +40,32 @@ const GasSponsorshipExample = () => {
             },
           ],
           functionName: "mint",
-          args: [kernelAccountClient.account.address, parseUnits(amount, ZERODEV_DECIMALS)],
+          args: [embeddedWallet?.address, parseUnits(amount, ZERODEV_DECIMALS)],
         }),
-        chain: chain,
+        chain: CHAIN,
       });
+      // return sendTransactionMutation({
+      //   transaction: {
+      //     account: kernelAccount,
+      //     to: ZERODEV_TOKEN_ADDRESS,
+      //     value: BigInt(0),
+      //     data: encodeFunctionData({
+      //       abi: [
+      //         {
+      //           name: "mint",
+      //           type: "function",
+      //           inputs: [
+      //             { name: "to", type: "address" },
+      //             { name: "amount", type: "uint256" },
+      //           ],
+      //         },
+      //       ],
+      //       functionName: "mint",
+      //       args: [embeddedWallet?.address, parseUnits(amount, ZERODEV_DECIMALS)],
+      //     }),
+      //     chain: CHAIN,
+      //   },
+      // });
     },
     onSuccess: (data) => {
       console.log(data);
@@ -53,6 +76,7 @@ const GasSponsorshipExample = () => {
       toast.error("Failed to send transaction");
     },
   });
+
   return (
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
       <h4 className="text-lg font-medium">Sponsor a Transaction</h4>
@@ -74,7 +98,7 @@ const GasSponsorshipExample = () => {
 
         <Button
           disabled={isPending}
-          onClick={() => sendTransaction()}
+          onClick={() => sendSponsoredTransaction()}
         >
           {isPending ? "Sending..." : "Send Sponsored Transaction"}
         </Button>
@@ -82,7 +106,7 @@ const GasSponsorshipExample = () => {
         {/* Tx link */}
         {txHash && (
           <a
-            href={`${SCOPE_URL}/tx/${txHash}`}
+            href={`${EXPLORER_URL}/tx/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary text-sm underline underline-offset-4"

@@ -2,22 +2,32 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { bundlerRpc, entryPoint, kernelAddresses, kernelVersion, paymasterRpc } from "@/lib/constants";
-import { useCreateWallet, useLoginWithEmail, usePrivy, useSignAuthorization, useWallets } from "@privy-io/react-auth";
+import { bundlerRpc, CHAIN, entryPoint, kernelAddresses, kernelVersion, paymasterRpc } from "@/lib/constants";
+import {
+  useCreateWallet,
+  useLogin,
+  useLoginWithEmail,
+  usePrivy,
+  useSignAuthorization,
+  useWallets,
+} from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo, useState } from "react";
-import { createPublicClient, createWalletClient, custom, Hex, http } from "viem";
-import { sepolia } from "viem/chains";
-import { AccountActionsProvider } from "../account-actions-provider";
-import { useAccountWrapperContext } from "../wrapper";
+import { createWalletClient, custom, Hex, http } from "viem";
+import { usePublicClient } from "wagmi";
+import {
+  AccountProviderContext,
+  EmbeddedWallet,
+  SendTransactionParameters,
+  SendUserOperationParameters,
+} from "./provider-context";
 
 /**
  * Constants for the Privy account provider
  */
 const PROVIDER = "privy";
-const chain = sepolia;
 
 /**
  * PrivyAccountProvider is a React component that manages authentication and wallet functionality
@@ -30,24 +40,24 @@ const chain = sepolia;
  */
 const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   const [openPrivySignInModal, setOpenPrivySignInModal] = useState(false);
-  const { setKernelAccount, setKernelAccountClient, setEmbeddedWallet, setPublicClient, setEcdsaValidator } =
-    useAccountWrapperContext();
   const { wallets } = useWallets();
   const { user } = usePrivy();
   const { createWallet } = useCreateWallet();
   const { signAuthorization } = useSignAuthorization();
 
-  const embeddedWallet = useMemo(() => {
+  const { login } = useLogin();
+
+  const privyEmbeddedWallet = useMemo(() => {
     return wallets.find((wallet) => wallet.walletClientType === "privy");
   }, [wallets]);
 
   const { data: ethereumProvider } = useQuery({
-    queryKey: [PROVIDER, "ethereumProvider", !!embeddedWallet],
+    queryKey: [PROVIDER, "ethereumProvider", !!privyEmbeddedWallet],
     queryFn: async () => {
-      if (!embeddedWallet) return null;
-      return await embeddedWallet.getEthereumProvider();
+      if (!privyEmbeddedWallet) return null;
+      return await privyEmbeddedWallet.getEthereumProvider();
     },
-    enabled: !!embeddedWallet,
+    enabled: !!privyEmbeddedWallet,
   });
 
   /**
@@ -55,40 +65,30 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
    * The configured wallet client or null if not available
    */
   const walletClient = useMemo(() => {
-    if (!ethereumProvider || !embeddedWallet) {
+    if (!ethereumProvider || !privyEmbeddedWallet) {
       return null;
     }
     return createWalletClient({
-      account: embeddedWallet.address as Hex,
-      chain,
+      account: privyEmbeddedWallet.address as Hex,
+      chain: CHAIN,
       transport: custom(ethereumProvider),
     });
-  }, [embeddedWallet, ethereumProvider]);
+  }, [privyEmbeddedWallet, ethereumProvider]);
 
   /**
    * Creates a public client for blockchain interactions
    * The configured public client or null if wallet client is not available
    */
-  const publicClient = useMemo(() => {
-    if (!walletClient) return null;
-    return createPublicClient({
-      chain,
-      transport: http(),
-    });
-  }, [walletClient]);
-
-  useEffect(() => {
-    if (publicClient) {
-      setPublicClient(publicClient);
-    }
-  }, [publicClient, setPublicClient]);
+  const publicClient = usePublicClient({
+    chainId: CHAIN.id,
+  });
 
   /**
    * Creates an ECDSA validator for the kernel account
    * The configured validator or null if prerequisites are not met
    */
   const { data: ecdsaValidator } = useQuery({
-    queryKey: ["ecdsaValidator", !!publicClient, !!walletClient],
+    queryKey: [PROVIDER, "ecdsaValidator", !!publicClient, !!walletClient],
     queryFn: async () => {
       if (!walletClient || !publicClient) return null;
 
@@ -134,13 +134,13 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
    * The configured kernel account or null if prerequisites are not met
    */
   const { data: kernelAccount } = useQuery({
-    queryKey: ["kernel-account", !!publicClient, !!walletClient, !!ecdsaValidator],
+    queryKey: [PROVIDER, "kernel-account", !!publicClient, !!walletClient, !!ecdsaValidator],
     queryFn: async () => {
       if (!publicClient) return null;
 
       const authorization = await signAuthorization({
         contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
-        chainId: chain.id,
+        chainId: CHAIN.id,
       });
 
       return createKernelAccount(publicClient, {
@@ -160,12 +160,6 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     retry: false,
   });
 
-  useEffect(() => {
-    if (kernelAccount) {
-      setKernelAccount(kernelAccount);
-    }
-  }, [kernelAccount, setKernelAccount]);
-
   /**
    * Creates a paymaster client for handling gas payments
    * The configured paymaster client or null if public client is not available
@@ -173,7 +167,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   const paymasterClient = useMemo(() => {
     if (!publicClient) return null;
     return createZeroDevPaymasterClient({
-      chain,
+      chain: CHAIN,
       transport: http(paymasterRpc),
     });
   }, [publicClient]);
@@ -186,7 +180,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     if (!publicClient || !kernelAccount || !paymasterClient) return null;
     return createKernelAccountClient({
       account: kernelAccount,
-      chain,
+      chain: CHAIN,
       bundlerTransport: http(bundlerRpc),
       paymaster: paymasterClient,
       client: publicClient,
@@ -195,51 +189,12 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     // for installing the intent executor plugin
   }, [publicClient, kernelAccount, paymasterClient]);
 
-  useEffect(() => {
-    if (ecdsaValidator) {
-      setEcdsaValidator(ecdsaValidator);
-    }
-  }, [ecdsaValidator, setEcdsaValidator]);
-
-  // const { data: kernelIntentAccount } = useQuery({
-  //   queryKey: ["kernel-intent-account", !!publicClient, !!kernelAccount, !!paymasterClient, !!ecdsaValidator],
-  //   queryFn: async () => {
-  //     if (!publicClient || !walletClient) return null;
-  //     return create7702KernelAccount(publicClient, {
-  //       kernelVersion,
-  //       entryPoint,
-  //       signer: walletClient!,
-  //       // initConfig: [installIntentExecutor(INTENT_V0_4)],
-  //       plugins
-  //     });
-  //   },
-  //   enabled: !!publicClient && !!kernelAccount && !!paymasterClient && !!ecdsaValidator,
-  // });
-
-  // const intentClient = useMemo(() => {
-  //   if (!kernelIntentAccount) return null;
-  //   return createIntentClient({
-  //     chain,
-  //     account: kernelIntentAccount,
-  //     bundlerTransport: http(bundlerRpc),
-  //     version: INTENT_V0_4,
-  //   });
-  // }, [kernelIntentAccount]);
-
-  useEffect(() => {
-    if (kernelAccountClient) {
-      setKernelAccountClient(kernelAccountClient);
-    }
-    // if (intentClient) {
-    //   setIntentClient(intentClient);
-    // }
-  }, [kernelAccountClient, setKernelAccountClient]);
-
   /**
    * Handles the sign-in process by opening the Privy sign-in modal
    */
   const signIn = async () => {
-    setOpenPrivySignInModal(true);
+    // setOpenPrivySignInModal(true);
+    login();
   };
 
   /**
@@ -251,37 +206,76 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       const newEmbeddedWallet = await createWallet();
       return newEmbeddedWallet;
     },
-    onSuccess: (data) => {
-      setEmbeddedWallet({
-        provider: "privy",
-        address: data.address,
-        user: user?.email?.address ?? "",
-      });
-    },
   });
 
   useEffect(() => {
     if (user) {
-      if (!embeddedWallet) {
+      if (!privyEmbeddedWallet) {
         createEmbeddedWallet();
-      } else {
-        setEmbeddedWallet({
-          provider: "privy",
-          address: embeddedWallet?.address ?? "",
-          user: user?.email?.address ?? "",
-        });
       }
     }
-  }, [user, embeddedWallet, setEmbeddedWallet, createEmbeddedWallet]);
+  }, [user, privyEmbeddedWallet, createEmbeddedWallet]);
+
+  const { mutateAsync: sendUserOperation } = useMutation({
+    mutationKey: [PROVIDER, "sendUserOperation"],
+    mutationFn: async ({ userOperation }: { userOperation: SendUserOperationParameters }) => {
+      if (!kernelAccountClient) throw new Error("No kernel account client found");
+      return kernelAccountClient.sendUserOperation(userOperation);
+    },
+  });
+
+  const { mutateAsync: sendTransaction } = useMutation({
+    mutationKey: [PROVIDER, "sendTransaction"],
+    mutationFn: async ({ transaction }: { transaction: SendTransactionParameters }) => {
+      if (!kernelAccountClient) throw new Error("No kernel account client found");
+      return kernelAccountClient.sendTransaction(transaction);
+    },
+  });
+
+  const { data: embeddedWallet } = useQuery<EmbeddedWallet | null>({
+    queryKey: [PROVIDER, "embeddedWallet", privyEmbeddedWallet?.address, user],
+    queryFn: async () => {
+      if (!user) return null;
+      if (!privyEmbeddedWallet) return null;
+
+      return {
+        provider: "privy",
+        address: privyEmbeddedWallet.address as `0x${string}`,
+        user: user.email?.address ?? user.id,
+      };
+    },
+    enabled: !!privyEmbeddedWallet && !!user,
+  });
+
+  const { data: isDeployed } = useQuery({
+    queryKey: [PROVIDER, "isDeployed", kernelAccountClient?.account.address],
+    queryFn: async () => {
+      if (!kernelAccountClient) return false;
+      return kernelAccountClient.account.isDeployed();
+    },
+    enabled: !!kernelAccountClient?.account,
+  });
 
   return (
-    <>
+    <AccountProviderContext.Provider
+      value={{
+        provider: "privy",
+        sendUserOperationMutation: sendUserOperation,
+        sendTransactionMutation: sendTransaction,
+        login: signIn,
+        embeddedWallet,
+        isDeployed: Boolean(isDeployed),
+        kernelAccountClient,
+        kernelAccount,
+        ecdsaValidator,
+      }}
+    >
       <PrivySignInModal
         openPrivySignInModal={openPrivySignInModal}
         setOpenPrivySignInModal={setOpenPrivySignInModal}
       />
-      <AccountActionsProvider signIn={signIn}>{children}</AccountActionsProvider>
-    </>
+      {children}
+    </AccountProviderContext.Provider>
   );
 };
 

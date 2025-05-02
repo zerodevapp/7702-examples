@@ -1,4 +1,5 @@
 "use client";
+import { ReactScan } from "@/components/react-scan";
 // import type { Metadata } from "next";
 import batchingExampleCode from "@/app/@batchingExample/code";
 import chainAbstractionExampleCode from "@/app/@chainAbstractionExample/code";
@@ -55,6 +56,7 @@ export default function RootLayout({
       lang="en"
       className="scroll-smooth"
     >
+      <ReactScan />
       <body className={`${firaCode.variable} ${monomaniacOne.variable} ${notoSans.variable} antialiased`}>
         <ReactQueryProvider>
           <AccountProviderWrapper>

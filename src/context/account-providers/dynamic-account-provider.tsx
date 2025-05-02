@@ -1,78 +1,156 @@
+import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
+import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
+import {
+  AccountProviderContext,
+  EmbeddedWallet,
+  SendTransactionParameters,
+  SendUserOperationParameters,
+} from "./provider-context";
+import { KernelAccountClient } from "@zerodev/sdk";
+import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
+import { CHAIN, entryPoint, kernelVersion } from "@/lib/constants";
+import { usePublicClient } from "wagmi";
+
+const PROVIDER = "dynamic";
 
 const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => {
-  // const { primaryWallet } = useDynamicContext();
+  const { primaryWallet, user } = useDynamicContext();
 
-  // const {
-  //   data: txHash,
-  //   isPending,
-  //   mutate: handleSendTransaction,
-  // } = useMutation({
-  //   mutationKey: ["sendTransaction"],
-  //   mutationFn: async () => {
-  //     const connector = primaryWallet?.connector;
+  const publicClient = usePublicClient({
+    chainId: CHAIN.id,
+  });
 
-  //     if (!connector) {
-  //       throw new Error("No connector found");
-  //     }
+  const { data: kernelAccountClient } = useQuery({
+    queryKey: [PROVIDER, "kernelAccountClient", primaryWallet?.address],
+    queryFn: async () => {
+      if (!primaryWallet) {
+        console.log("[DYNAMIC] No primary wallet found");
+        return null;
+      }
 
-  //     if (!isZeroDevConnector(connector)) {
-  //       throw new Error("Connector is not a ZeroDev connector");
-  //     }
+      if (!isZeroDevConnector(primaryWallet.connector)) {
+        console.log("[DYNAMIC] Connector is not a ZeroDev connector");
+        return null;
+      }
+      const walletClient = primaryWallet.connector.getWalletClient?.();
+      console.log({ walletClient, primaryWallet });
 
-  //     const params = {
-  //       withSponsorship: true,
-  //     };
-  //     const kernelClient = connector.getAccountAbstractionProvider(params);
+      const connector = primaryWallet.connector;
+      const _kernelAccountClient = connector.getAccountAbstractionProvider({
+        withSponsorship: true,
+      });
 
-  //     if (!kernelClient) {
-  //       throw new Error("No kernel client found");
-  //     }
+      if (!_kernelAccountClient) {
+        console.error("[DYNAMIC] Kernel client not found");
+        return null;
+      }
 
-  //     try {
-  //       const userOpHash = await kernelClient.sendTransaction({
-  //         calls: [
-  //           {
-  //             data: "0x",
-  //             to: zeroAddress,
-  //             value: BigInt(0),
-  //           },
-  //           {
-  //             data: "0x",
-  //             to: zeroAddress,
-  //             value: BigInt(0),
-  //           },
-  //         ],
-  //       });
+      return _kernelAccountClient as KernelAccountClient;
+    },
+  });
+  const { data: ecdsaValidator } = useQuery({
+    queryKey: [PROVIDER, "ecdsaValidator", primaryWallet?.address],
+    queryFn: async () => {
+      if (!primaryWallet) {
+        console.error("[DYNAMIC] No primary wallet found");
+        return null;
+      }
 
-  //       const { receipt } = await kernelClient.waitForUserOperationReceipt({
-  //         hash: userOpHash,
-  //       });
+      if (!publicClient) {
+        console.error("[DYNAMIC] No public client found");
+        return null;
+      }
 
-  //       return receipt.transactionHash;
-  //     } catch (err) {
-  //       throw new Error((err as Error).message || "Error sending transaction");
-  //     }
-  //   },
-  //   onSuccess: () => {
-  //     toast.success("Transaction sent successfully", {
-  //       description: "Transaction sent successfully",
-  //       action: {
-  //         label: "View on Explorer",
-  //         onClick: () => {
-  //           window.open(`https://sepolia.etherscan.io/tx/${txHash}`, "_blank");
-  //         },
-  //       },
-  //     });
-  //   },
-  //   onError: (error) => {
-  //     console.log(error);
-  //     toast.error(error.message || "Error sending transaction", {
-  //       description: "Error sending transaction",
-  //     });
-  //   },
-  // });
-  return children;
+      if (!isZeroDevConnector(primaryWallet.connector)) {
+        console.error("[DYNAMIC] Connector is not a ZeroDev connector");
+        return null;
+      }
+      const dynamicWalletClient = primaryWallet?.connector?.getWalletClient();
+
+      if (!dynamicWalletClient) {
+        console.error("[DYNAMIC] No dynamic wallet client found");
+        return null;
+      }
+
+      // Pass your `smartAccountSigner` to the validator
+      const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
+        signer: dynamicWalletClient,
+        entryPoint: entryPoint,
+        kernelVersion: kernelVersion,
+      });
+
+      return ecdsaValidator;
+    },
+  });
+
+  const { data: kernelAccount } = useQuery({
+    queryKey: [PROVIDER, "kernelAccount", primaryWallet?.address],
+    queryFn: async () => {
+      if (!kernelAccountClient) return null;
+      return kernelAccountClient.account;
+    },
+  });
+
+  const { data: embeddedWallet } = useQuery<EmbeddedWallet | null>({
+    queryKey: [PROVIDER, "embeddedWallet", primaryWallet?.address, user?.email, user?.username],
+    queryFn: async () => {
+      if (!primaryWallet) return null;
+      if (!user) return null;
+
+      return {
+        provider: "dynamic",
+        address: primaryWallet.address as `0x${string}`,
+        user: user.email || user.username || "",
+      };
+    },
+    enabled: !!primaryWallet && !!user,
+  });
+
+  // isDeployed
+  const { data: isDeployed } = useQuery({
+    queryKey: [PROVIDER, "isDeployed", kernelAccountClient?.account?.address],
+    queryFn: async () => {
+      if (!kernelAccountClient?.account) return false;
+      return kernelAccountClient.account.isDeployed();
+    },
+    enabled: !!kernelAccountClient?.account,
+  });
+
+  const { mutateAsync: sendUserOperation } = useMutation({
+    mutationKey: [PROVIDER, "sendUserOperation"],
+    mutationFn: async ({ userOperation }: { userOperation: SendUserOperationParameters }) => {
+      if (!kernelAccountClient) throw new Error("No kernel account client found");
+      return kernelAccountClient.sendUserOperation(userOperation);
+    },
+  });
+
+  const { mutateAsync: sendTransaction } = useMutation({
+    mutationKey: [PROVIDER, "sendTransaction"],
+    mutationFn: async ({ transaction }: { transaction: SendTransactionParameters }) => {
+      if (!kernelAccountClient) throw new Error("No kernel account client found");
+      return kernelAccountClient.sendTransaction(transaction);
+    },
+  });
+
+  return (
+    <AccountProviderContext.Provider
+      value={{
+        provider: "dynamic",
+        sendUserOperationMutation: sendUserOperation,
+        sendTransactionMutation: sendTransaction,
+        login: () => Promise.resolve(),
+        embeddedWallet,
+        isDeployed: Boolean(isDeployed),
+        kernelAccount,
+        kernelAccountClient,
+        ecdsaValidator,
+      }}
+    >
+      {children}
+    </AccountProviderContext.Provider>
+  );
 };
 
 export default DynamicAccountProvider;

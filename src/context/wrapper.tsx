@@ -1,53 +1,24 @@
 "use client";
+import { EthereumWalletConnectors } from "@dynamic-labs/ethereum";
+import { ZeroDevSmartWalletConnectors } from "@dynamic-labs/ethereum-aa";
+import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
+import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 import { PrivyProvider } from "@privy-io/react-auth";
-import { CreateKernelAccountReturnType, KernelAccountClient, KernelValidator } from "@zerodev/sdk";
-import React, { createContext, useContext, useMemo, useState } from "react";
-import PrivyAccountProvider from "./account-providers/privy-account-provider";
-import { createConfig, http, WagmiProvider } from "wagmi";
+import React, { createContext, useContext, useMemo } from "react";
+import { useLocalStorage } from "usehooks-ts";
 import { baseSepolia, sepolia } from "viem/chains";
-import { IntentClient } from "@zerodev/intent";
-import { PublicClient } from "viem";
-
-export const accountProviders = ["privy", "dynamic", "turnkey", "browser"] as const;
-export type AccountProviders = (typeof accountProviders)[number];
+import { createConfig, http, WagmiProvider } from "wagmi";
+import DynamicAccountProvider from "./account-providers/dynamic-account-provider";
+import PrivyAccountProvider from "./account-providers/privy-account-provider";
+import { AccountProviders } from "./account-providers/provider-context";
 
 export const AccountProviderContext = createContext<{
   accountProvider: AccountProviders;
   setAccountProvider: (accountProvider: AccountProviders) => void;
-  kernelAccountClient: KernelAccountClient | null;
-  kernelAccount: CreateKernelAccountReturnType | null;
-  setKernelAccountClient: (kernelAccountClient: KernelAccountClient | null) => void;
-  setKernelAccount: (kernelAccount: CreateKernelAccountReturnType | null) => void;
-  embeddedWallet: EmbeddedWallet | null;
-  setEmbeddedWallet: (embeddedWallet: EmbeddedWallet | null) => void;
-  intentClient: IntentClient | null;
-  setIntentClient: (intentClient: IntentClient | null) => void;
-  publicClient: PublicClient | null;
-  setPublicClient: (publicClient: PublicClient | null) => void;
-  ecdsaValidator: KernelValidator<"ECDSAValidator"> | null;
-  setEcdsaValidator: (ecdsaValidator: KernelValidator<"ECDSAValidator"> | null) => void;
 }>({
   accountProvider: "privy",
   setAccountProvider: () => {},
-  kernelAccountClient: null,
-  kernelAccount: null,
-  setKernelAccountClient: () => {},
-  setKernelAccount: () => {},
-  embeddedWallet: null,
-  setEmbeddedWallet: () => {},
-  intentClient: null,
-  setIntentClient: () => {},
-  publicClient: null,
-  setPublicClient: () => {},
-  ecdsaValidator: null,
-  setEcdsaValidator: () => {},
 });
-
-type EmbeddedWallet = {
-  provider: "privy" | "dynamic" | "turnkey" | "browser";
-  address: string;
-  user: string;
-};
 
 const wagmiConfig = createConfig({
   chains: [sepolia, baseSepolia],
@@ -58,13 +29,7 @@ const wagmiConfig = createConfig({
 });
 
 const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => {
-  const [accountProvider, setAccountProvider] = useState<AccountProviders>("privy");
-  const [embeddedWallet, setEmbeddedWallet] = useState<EmbeddedWallet | null>(null);
-  const [ecdsaValidator, setEcdsaValidator] = useState<KernelValidator<"ECDSAValidator"> | null>(null);
-  const [kernelAccountClient, setKernelAccountClient] = useState<KernelAccountClient | null>(null);
-  const [kernelAccount, setKernelAccount] = useState<CreateKernelAccountReturnType | null>(null);
-  const [intentClient, setIntentClient] = useState<IntentClient | null>(null);
-  const [publicClient, setPublicClient] = useState<PublicClient | null>(null);
+  const [accountProvider, setAccountProvider] = useLocalStorage<AccountProviders>("accountProvider", "privy");
 
   const EmbeddedOrInjectedProvider = useMemo(() => {
     if (accountProvider === "privy") {
@@ -87,15 +52,24 @@ const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => 
       );
       return PrivyProviderWrapper;
     }
-    // if (accountProvider === "dynamic") {
-    //   return DynamicAccountProvider;
-    // }
-    // if (accountProvider === "turnkey") {
-    //   return TurnkeyAccountProvider;
-    // }
-    // if (accountProvider === "browser") {
-    //   return BrowserAccountProvider;
-    // }
+    if (accountProvider === "dynamic") {
+      const DynamProviderWrapper = ({ children }: { children: React.ReactNode }) => (
+        <DynamicContextProvider
+          settings={{
+            // Find your environment id at https://app.dynamic.xyz/dashboard/developer
+            environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID!,
+            walletConnectors: [EthereumWalletConnectors, ZeroDevSmartWalletConnectors],
+          }}
+        >
+          <WagmiProvider config={wagmiConfig}>
+            <DynamicWagmiConnector>
+              <DynamicAccountProvider>{children}</DynamicAccountProvider>
+            </DynamicWagmiConnector>
+          </WagmiProvider>
+        </DynamicContextProvider>
+      );
+      return DynamProviderWrapper;
+    }
   }, [accountProvider]);
 
   if (!EmbeddedOrInjectedProvider) {
@@ -111,18 +85,6 @@ const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => 
       value={{
         accountProvider,
         setAccountProvider,
-        kernelAccountClient,
-        kernelAccount,
-        setKernelAccountClient,
-        setKernelAccount,
-        embeddedWallet,
-        setEmbeddedWallet,
-        intentClient,
-        setIntentClient,
-        publicClient,
-        setPublicClient,
-        ecdsaValidator,
-        setEcdsaValidator,
       }}
     >
       <EmbeddedOrInjectedProvider>{children}</EmbeddedOrInjectedProvider>

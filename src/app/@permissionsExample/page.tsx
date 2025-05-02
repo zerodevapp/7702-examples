@@ -3,22 +3,21 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { useAccountWrapperContext } from "@/context/wrapper";
+import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import {
   bundlerRpc,
-  chain,
+  CHAIN,
   entryPoint,
   kernelVersion,
   paymasterRpc,
-  SCOPE_URL,
-  SEPOLIA_USDC_ADDRESS,
+  EXPLORER_URL,
   ZERODEV_DECIMALS,
   ZERODEV_TOKEN_ADDRESS,
 } from "@/lib/constants";
 import { ZERODEV_TOKEN_ABI } from "@/lib/constants/zeroDevTokenAbi";
 import { useMutation } from "@tanstack/react-query";
 import { deserializePermissionAccount, serializePermissionAccount, toPermissionValidator } from "@zerodev/permissions";
-import { CallPolicyVersion, ParamCondition, toCallPolicy, toSudoPolicy } from "@zerodev/permissions/policies";
+import { CallPolicyVersion, ParamCondition, toCallPolicy } from "@zerodev/permissions/policies";
 import { toECDSASigner } from "@zerodev/permissions/signers";
 import {
   createKernelAccount,
@@ -30,38 +29,48 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { useLocalStorage } from "usehooks-ts";
-import { encodeFunctionData, erc20Abi, http, parseUnits } from "viem";
+import { encodeFunctionData, http, parseUnits, zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { usePublicClient } from "wagmi";
 
 const PermissionsExample = () => {
   const [amount, setAmount] = useState<string>("");
   const [serialisedSessionKey, setSerialisedSessionKey] = useLocalStorage<string | null>("serialisedSessionKey", null);
+  const [sessionAccountAddress, setSessionAccountAddress] = useLocalStorage<`0x${string}` | null>(
+    "sessionAccountAddress",
+    null,
+  );
 
   const [sessionKernelClient, setSessionKernelClient] = useState<KernelAccountClient | null>(null);
-  const [sessionKeyAccount, setSessionKeyAccount] = useState<CreateKernelAccountReturnType | null>(null);
+
   const {
+    kernelAccount: masterKernelAccount,
     kernelAccountClient: masterKernelAccountClient,
-    publicClient,
     ecdsaValidator: masterEcdsaValidator,
-  } = useAccountWrapperContext();
+  } = useAccountProviderContext();
+
+  const publicClient = usePublicClient({
+    chainId: CHAIN.id,
+  });
 
   const createSessionKey = async () => {
-    if (!masterKernelAccountClient?.account) throw new Error("Kernel account client not found");
+    if (!masterKernelAccount?.address || !masterKernelAccountClient?.account || !masterEcdsaValidator)
+      throw new Error("Kernel account client not found");
     if (!publicClient) throw new Error("Public client not found");
-    if (!masterEcdsaValidator) throw new Error("ECDSA validator not found");
 
-    let sessionKeyAccount: CreateKernelAccountReturnType;
+    let sessionKeyKernelAccount: CreateKernelAccountReturnType;
+
     if (serialisedSessionKey) {
-      sessionKeyAccount = await deserializePermissionAccount(
+      sessionKeyKernelAccount = await deserializePermissionAccount(
         publicClient,
         entryPoint,
         kernelVersion,
         serialisedSessionKey,
       );
     } else {
-      const _sessionKey = generatePrivateKey();
+      const _sessionPrivateKey = generatePrivateKey();
 
-      const sessionAccount = privateKeyToAccount(_sessionKey as `0x${string}`);
+      const sessionAccount = privateKeyToAccount(_sessionPrivateKey as `0x${string}`);
 
       const sessionKeySigner = await toECDSASigner({
         signer: sessionAccount,
@@ -77,8 +86,8 @@ const PermissionsExample = () => {
             functionName: "transfer",
             args: [
               {
-                condition: ParamCondition.EQUAL,
-                value: masterKernelAccountClient.account.address,
+                condition: ParamCondition.NOT_EQUAL,
+                value: zeroAddress,
               },
               {
                 condition: ParamCondition.LESS_THAN,
@@ -93,26 +102,30 @@ const PermissionsExample = () => {
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,
         signer: sessionKeySigner,
-        policies: [toSudoPolicy({})],
+        policies: [callPolicy],
       });
 
-      sessionKeyAccount = await createKernelAccount(publicClient, {
+      sessionKeyKernelAccount = await createKernelAccount(publicClient, {
         entryPoint,
         plugins: {
           sudo: masterEcdsaValidator,
           regular: permissionPlugin,
         },
         kernelVersion: kernelVersion,
+        address: masterKernelAccount.address,
       });
+      // save new session account
+      setSessionAccountAddress(sessionAccount.address);
+      setSerialisedSessionKey(await serializePermissionAccount(sessionKeyKernelAccount, _sessionPrivateKey));
     }
 
     const kernelPaymaster = createZeroDevPaymasterClient({
-      chain: chain,
+      chain: CHAIN,
       transport: http(paymasterRpc),
     });
     const kernelClient = createKernelAccountClient({
-      account: sessionKeyAccount,
-      chain: chain,
+      account: sessionKeyKernelAccount,
+      chain: CHAIN,
       bundlerTransport: http(bundlerRpc),
       paymaster: {
         getPaymasterData(userOperation) {
@@ -121,9 +134,7 @@ const PermissionsExample = () => {
       },
     });
 
-    setSerialisedSessionKey(await serializePermissionAccount(sessionKeyAccount));
     setSessionKernelClient(kernelClient);
-    setSessionKeyAccount(sessionKeyAccount);
   };
 
   const {
@@ -133,17 +144,17 @@ const PermissionsExample = () => {
   } = useMutation({
     mutationFn: async () => {
       if (!sessionKernelClient) throw new Error("Kernel client not found");
-      if (!masterKernelAccountClient?.account) throw new Error("Kernel account client not found");
+      if (!masterKernelAccount?.address) throw new Error("Kernel account client not found");
 
       return sessionKernelClient?.sendTransaction({
         calls: [
           {
-            to: SEPOLIA_USDC_ADDRESS,
+            to: ZERODEV_TOKEN_ADDRESS,
             value: BigInt(0),
             data: encodeFunctionData({
-              abi: erc20Abi,
+              abi: ZERODEV_TOKEN_ABI,
               functionName: "transfer",
-              args: [masterKernelAccountClient.account.address, parseUnits(amount, 18)],
+              args: ["0x65A49dF64216bE58F8851A553863658dB7Fe301F", parseUnits(amount, ZERODEV_DECIMALS)],
             }),
           },
         ],
@@ -155,7 +166,7 @@ const PermissionsExample = () => {
         action: {
           label: "View",
           onClick: () => {
-            window.open(`${SCOPE_URL}/op/${data}`, "_blank");
+            window.open(`${EXPLORER_URL}/tx/${data}`, "_blank");
           },
         },
       });
@@ -165,8 +176,6 @@ const PermissionsExample = () => {
       toast.error("Transaction failed");
     },
   });
-
-  console.log({ kernelClient: sessionKernelClient, sessionKeyAccount });
 
   return (
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
@@ -183,24 +192,24 @@ const PermissionsExample = () => {
             Create
           </Button>
 
-          {/* {kernelClient?.sessionKey && (
+          {sessionKernelClient && (
             <div className="w-full">
               <p className="text-sm">Session Account</p>
-              <p className="truncate text-sm">{kernelClient.sessionKey.address}</p>
+              <p className="truncate text-sm">{sessionAccountAddress}</p>
             </div>
-          )} */}
+          )}
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="h-9 text-sm font-medium">2. Transfer ZDEV</Badge>
           <Input
-            className="bg-background"
+            className="bg-background w-fit flex-1"
             type="text"
             placeholder="Amount"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
           />
-          <p className="text-sm">This transaction will be rejected if the amount is greater than 10 ZDEV.</p>
+          <p className="text-sm">This transaction will be rejected if the amount is not less than 10 ZDEV.</p>
         </div>
 
         <Button
@@ -212,12 +221,12 @@ const PermissionsExample = () => {
 
         {txHash && (
           <a
-            href={`${SCOPE_URL}/op/${txHash}`}
+            href={`${EXPLORER_URL}/op/${txHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary text-sm underline underline-offset-4"
           >
-            View Destination Transaction
+            Explorer
           </a>
         )}
       </div>
