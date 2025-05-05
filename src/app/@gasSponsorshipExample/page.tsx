@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
-import { CHAIN, EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
+import { SEPOLIA, EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -42,7 +42,7 @@ const GasSponsorshipExample = () => {
           functionName: "mint",
           args: [embeddedWallet?.address, parseUnits(amount, ZERODEV_DECIMALS)],
         }),
-        chain: CHAIN,
+        chain: SEPOLIA,
       });
       // return sendTransactionMutation({
       //   transaction: {

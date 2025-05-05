@@ -2,14 +2,13 @@
 import { ReactScan } from "@/components/react-scan";
 // import type { Metadata } from "next";
 import batchingExampleCode from "@/app/@batchingExample/code";
-import chainAbstractionExampleCode from "@/app/@chainAbstractionExample/code";
 import gasSponsorshipExampleCode from "@/app/@gasSponsorshipExample/code";
 import permissionsExampleCode from "@/app/@permissionsExample/code";
 import ExampleBlock from "@/components/example/example-block";
 import Footer from "@/components/footer";
 import Navigation from "@/components/navigation";
-import AccountProviderWrapper from "@/context/wrapper";
 import { ReactQueryProvider } from "@/context/react-query";
+import AccountProviderWrapper from "@/context/wrapper";
 import { Fira_Code, Monomaniac_One, Noto_Sans } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
@@ -43,13 +42,13 @@ export default function RootLayout({
   batchingExample,
   gasSponsorshipExample,
   permissionsExample,
-  chainAbstractionExample,
+  // chainAbstractionExample,
 }: Readonly<{
   children: React.ReactNode;
   batchingExample: React.ReactNode;
   gasSponsorshipExample: React.ReactNode;
   permissionsExample: React.ReactNode;
-  chainAbstractionExample: React.ReactNode;
+  // chainAbstractionExample: React.ReactNode;
 }>) {
   return (
     <html
@@ -124,7 +123,7 @@ export default function RootLayout({
                     </p>
                   }
                 />
-                <ExampleBlock
+                {/* <ExampleBlock
                   index={4}
                   title="Chain Abstraction"
                   docs="https://docs.privy.io/guides/chain-abstraction"
@@ -141,10 +140,10 @@ export default function RootLayout({
                       Chain abstracted balances eliminate the need to track and maintain balances on multiple chains.
                     </p>
                   }
-                />
+                /> */}
               </main>
             </div>
-            <Footer />
+            {/* <Footer /> */}
             <Toaster richColors />
           </AccountProviderWrapper>
         </ReactQueryProvider>

@@ -2,7 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { bundlerRpc, CHAIN, entryPoint, kernelAddresses, kernelVersion, paymasterRpc } from "@/lib/constants";
+import {
+  sepoliaBundlerRpc,
+  SEPOLIA,
+  entryPoint,
+  kernelAddresses,
+  kernelVersion,
+  sepoliaPaymasterRpc,
+} from "@/lib/constants";
 import {
   useCreateWallet,
   useLogin,
@@ -13,9 +20,11 @@ import {
 } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
+import { createIntentClient, getIntentExecutorPluginData, installIntentExecutor, INTENT_V0_4 } from "@zerodev/intent";
+import { toMultiChainECDSAValidator } from "@zerodev/multi-chain-ecdsa-validator";
 import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo, useState } from "react";
-import { createWalletClient, custom, Hex, http } from "viem";
+import { createWalletClient, custom, Hex, http, zeroAddress } from "viem";
 import { usePublicClient } from "wagmi";
 import {
   AccountProviderContext,
@@ -23,6 +32,7 @@ import {
   SendTransactionParameters,
   SendUserOperationParameters,
 } from "./provider-context";
+import { baseSepolia } from "viem/chains";
 
 /**
  * Constants for the Privy account provider
@@ -70,7 +80,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     }
     return createWalletClient({
       account: privyEmbeddedWallet.address as Hex,
-      chain: CHAIN,
+      chain: SEPOLIA,
       transport: custom(ethereumProvider),
     });
   }, [privyEmbeddedWallet, ethereumProvider]);
@@ -79,8 +89,11 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
    * Creates a public client for blockchain interactions
    * The configured public client or null if wallet client is not available
    */
-  const publicClient = usePublicClient({
-    chainId: CHAIN.id,
+  const sepoliaPublicClient = usePublicClient({
+    chainId: SEPOLIA.id,
+  });
+  const basePublicClient = usePublicClient({
+    chainId: baseSepolia.id,
   });
 
   /**
@@ -88,17 +101,17 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
    * The configured validator or null if prerequisites are not met
    */
   const { data: ecdsaValidator } = useQuery({
-    queryKey: [PROVIDER, "ecdsaValidator", !!publicClient, !!walletClient],
+    queryKey: [PROVIDER, "ecdsaValidator", !!sepoliaPublicClient, !!walletClient],
     queryFn: async () => {
-      if (!walletClient || !publicClient) return null;
+      if (!walletClient || !sepoliaPublicClient) return null;
 
-      return signerToEcdsaValidator(publicClient, {
+      return signerToEcdsaValidator(sepoliaPublicClient, {
         signer: walletClient,
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,
       });
     },
-    enabled: !!publicClient && !!walletClient,
+    enabled: !!sepoliaPublicClient && !!walletClient,
   });
 
   // const { data: webAuthnKey } = useQuery({
@@ -134,16 +147,16 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
    * The configured kernel account or null if prerequisites are not met
    */
   const { data: kernelAccount } = useQuery({
-    queryKey: [PROVIDER, "kernel-account", !!publicClient, !!walletClient, !!ecdsaValidator],
+    queryKey: [PROVIDER, "kernel-account", !!sepoliaPublicClient, !!walletClient, !!ecdsaValidator],
     queryFn: async () => {
-      if (!publicClient) return null;
+      if (!sepoliaPublicClient) return null;
 
       const authorization = await signAuthorization({
         contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
-        chainId: CHAIN.id,
+        chainId: SEPOLIA.id,
       });
 
-      return createKernelAccount(publicClient, {
+      return createKernelAccount(sepoliaPublicClient, {
         plugins: {
           sudo: ecdsaValidator!,
         },
@@ -151,12 +164,11 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         kernelVersion,
         address: walletClient!.account.address,
         eip7702Auth: authorization,
-        pluginMigrations: [
-          // getIntentExecutorPluginData
-        ],
+        initConfig: [installIntentExecutor(INTENT_V0_4)],
+        pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
       });
     },
-    enabled: !!publicClient && !!walletClient && !!ecdsaValidator,
+    enabled: !!sepoliaPublicClient && !!walletClient && !!ecdsaValidator,
     retry: false,
   });
 
@@ -164,30 +176,146 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
    * Creates a paymaster client for handling gas payments
    * The configured paymaster client or null if public client is not available
    */
-  const paymasterClient = useMemo(() => {
-    if (!publicClient) return null;
+  const sepoliaPaymasterClient = useMemo(() => {
+    if (!sepoliaPublicClient) return null;
     return createZeroDevPaymasterClient({
-      chain: CHAIN,
-      transport: http(paymasterRpc),
+      chain: SEPOLIA,
+      transport: http(sepoliaPaymasterRpc),
     });
-  }, [publicClient]);
+  }, [sepoliaPublicClient]);
 
   /**
    * Creates a kernel account client for interacting with the kernel account
    * The configured kernel account client or null if prerequisites are not met
    */
   const kernelAccountClient = useMemo(() => {
-    if (!publicClient || !kernelAccount || !paymasterClient) return null;
+    if (!sepoliaPublicClient || !kernelAccount || !sepoliaPaymasterClient) return null;
     return createKernelAccountClient({
       account: kernelAccount,
-      chain: CHAIN,
-      bundlerTransport: http(bundlerRpc),
-      paymaster: paymasterClient,
-      client: publicClient,
+      chain: SEPOLIA,
+      bundlerTransport: http(sepoliaBundlerRpc),
+      paymaster: sepoliaPaymasterClient,
+      client: sepoliaPublicClient,
     });
     // TODO: send empty userops on both chains (base, sepolia)
     // for installing the intent executor plugin
-  }, [publicClient, kernelAccount, paymasterClient]);
+  }, [sepoliaPublicClient, kernelAccount, sepoliaPaymasterClient]);
+
+  // intent client
+  const { data: intentClient, mutateAsync: createIntentClientMutation } = useMutation({
+    mutationKey: [
+      PROVIDER,
+      "intentClient",
+      !!sepoliaPublicClient,
+      !!walletClient,
+      !!ecdsaValidator,
+      !!sepoliaPaymasterClient,
+    ],
+    mutationFn: async () => {
+      if (!basePublicClient) throw new Error("No public client found");
+      if (!sepoliaPublicClient) throw new Error("No public client found");
+      if (!walletClient) throw new Error("No wallet client found");
+      if (!sepoliaPaymasterClient) throw new Error("No paymaster client found");
+      const ecdsaValidator = await toMultiChainECDSAValidator(sepoliaPublicClient, {
+        signer: walletClient,
+        kernelVersion,
+        entryPoint,
+        multiChainIds: [SEPOLIA.id, baseSepolia.id],
+      });
+
+      const sepoliaAuthorization = await signAuthorization({
+        contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
+        chainId: SEPOLIA.id,
+      });
+
+      // create a kernel account with intent executor plugin
+      const sepoliaKernelAccount = await createKernelAccount(sepoliaPublicClient, {
+        address: walletClient!.account.address,
+        plugins: {
+          sudo: ecdsaValidator,
+        },
+        kernelVersion,
+        entryPoint,
+        initConfig: [installIntentExecutor(INTENT_V0_4)],
+        // pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
+        eip7702Auth: sepoliaAuthorization,
+      });
+
+      // the cabclient can be used to send normal userOp and cross-chain cab tx
+      const sepoliaIntentClient = createIntentClient({
+        account: sepoliaKernelAccount,
+        chain: SEPOLIA,
+        bundlerTransport: http(sepoliaBundlerRpc),
+        version: INTENT_V0_4,
+        paymaster: sepoliaPaymasterClient,
+      });
+
+      await sepoliaIntentClient
+        .sendTransaction({
+          to: zeroAddress,
+          value: BigInt(0),
+          data: "0x",
+        })
+        .then(() => {
+          console.log("installed intent executor plugin on sepolia");
+        })
+        .catch((error) => {
+          console.error("error installing intent executor plugin on sepolia", error);
+          throw new Error("Error installing intent executor plugin on sepolia");
+        });
+
+      // const baseSepoliaPaymasterClient = createZeroDevPaymasterClient({
+      //   chain: baseSepolia,
+      //   transport: http(`https://rpc.zerodev.app/api/v3/${PROJECT_ID}/chain/${baseSepolia.id}`),
+      // });
+      // const baseSepoliaAuthorization = await signAuthorization({
+      //   contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
+      //   chainId: baseSepolia.id,
+      // });
+      // // create a kernel account with intent executor plugin
+      // const baseSepoliaKernelAccount = await createKernelAccount(basePublicClient, {
+      //   address: walletClient!.account.address,
+      //   plugins: {
+      //     sudo: ecdsaValidator,
+      //   },
+      //   kernelVersion,
+      //   entryPoint,
+      //   initConfig: [installIntentExecutor(INTENT_V0_4)],
+      //   eip7702Auth: baseSepoliaAuthorization,
+      //   pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
+      // });
+
+      // // create sepolia and base sepolia intent clients
+      // const baseSepoliaIntentClient = createIntentClient({
+      //   account: baseSepoliaKernelAccount,
+      //   chain: baseSepolia,
+      //   bundlerTransport: http(`https://rpc.zerodev.app/api/v3/${PROJECT_ID}/chain/${baseSepolia.id}`),
+      //   version: INTENT_V0_4,
+      //   paymaster: baseSepoliaPaymasterClient,
+      // });
+
+      // console.log("baseSepoliaIntentClient", baseSepoliaIntentClient.account.address);
+      // console.log("sepoliaIntentClient", sepoliaIntentClient.account.address);
+
+      // empty userop to install the intent executor plugin
+      // await baseSepoliaIntentClient
+      //   .sendTransaction({
+      //     to: zeroAddress,
+      //     value: BigInt(0),
+      //     data: "0x",
+      //   })
+      //   .then(() => {
+      //     console.log("installed intent executor plugin on baseSepolia");
+      //   })
+      //   .catch((error) => {
+      //     console.error("error installing intent executor plugin on baseSepolia", error);
+      //     throw new Error("Error installing intent executor plugin on baseSepolia");
+      //   });
+      // return baseSepoliaIntentClient;
+
+      return sepoliaIntentClient;
+    },
+  });
 
   /**
    * Handles the sign-in process by opening the Privy sign-in modal
@@ -268,6 +396,8 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         kernelAccountClient,
         kernelAccount,
         ecdsaValidator,
+        intentClient,
+        createIntentClient: createIntentClientMutation,
       }}
     >
       <PrivySignInModal

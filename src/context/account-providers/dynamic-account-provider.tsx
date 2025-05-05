@@ -10,7 +10,7 @@ import {
 } from "./provider-context";
 import { KernelAccountClient } from "@zerodev/sdk";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
-import { CHAIN, entryPoint, kernelVersion } from "@/lib/constants";
+import { SEPOLIA, entryPoint, kernelVersion } from "@/lib/constants";
 import { usePublicClient } from "wagmi";
 
 const PROVIDER = "dynamic";
@@ -19,7 +19,7 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
   const { primaryWallet, user } = useDynamicContext();
 
   const publicClient = usePublicClient({
-    chainId: CHAIN.id,
+    chainId: SEPOLIA.id,
   });
 
   const { data: kernelAccountClient } = useQuery({
@@ -76,6 +76,7 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
 
       // Pass your `smartAccountSigner` to the validator
       const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
+        // @ts-expect-error - type inconsistency
         signer: dynamicWalletClient,
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,

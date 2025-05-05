@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import {
-  bundlerRpc,
-  CHAIN,
+  sepoliaBundlerRpc,
+  SEPOLIA,
   entryPoint,
   kernelVersion,
-  paymasterRpc,
+  sepoliaPaymasterRpc,
   EXPLORER_URL,
   ZERODEV_DECIMALS,
   ZERODEV_TOKEN_ADDRESS,
@@ -50,7 +50,7 @@ const PermissionsExample = () => {
   } = useAccountProviderContext();
 
   const publicClient = usePublicClient({
-    chainId: CHAIN.id,
+    chainId: SEPOLIA.id,
   });
 
   const createSessionKey = async () => {
@@ -120,13 +120,13 @@ const PermissionsExample = () => {
     }
 
     const kernelPaymaster = createZeroDevPaymasterClient({
-      chain: CHAIN,
-      transport: http(paymasterRpc),
+      chain: SEPOLIA,
+      transport: http(sepoliaPaymasterRpc),
     });
     const kernelClient = createKernelAccountClient({
       account: sessionKeyKernelAccount,
-      chain: CHAIN,
-      bundlerTransport: http(bundlerRpc),
+      chain: SEPOLIA,
+      bundlerTransport: http(sepoliaBundlerRpc),
       paymaster: {
         getPaymasterData(userOperation) {
           return kernelPaymaster.sponsorUserOperation({ userOperation });

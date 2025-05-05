@@ -1,9 +1,9 @@
 import Link from "next/link";
 import React from "react";
 import { Button } from "../ui/button";
-import CodeBlock, { CodeBlockProps } from "../ui/code";
+import { CodeBlockProps } from "../ui/code";
 import Heading from "../ui/heading";
-
+import CodeBlocks from "./code-blocks";
 type ExampleBlockProps = {
   title: string;
   docs: string;
@@ -11,7 +11,7 @@ type ExampleBlockProps = {
   description: React.ReactNode;
   example: React.ReactNode;
   index: number;
-  codeBlock: Array<CodeBlockProps & { stepTitle?: string }>;
+  codeBlock: Array<CodeBlockProps & { stepTitle?: string; stepDescription?: string }>;
 };
 
 const ExampleBlock = ({ index, title, docs, github, description, example, codeBlock }: ExampleBlockProps) => {
@@ -29,18 +29,7 @@ const ExampleBlock = ({ index, title, docs, github, description, example, codeBl
       {/* slot to display /batching/<example> */}
       <div className="example grid flex-1 grid-cols-1 gap-4 p-4 px-6 @3xl:grid-cols-2">
         <div className="flex max-h-128 flex-col gap-4 overflow-hidden">
-          {codeBlock.map((block, index) => (
-            <div
-              key={index}
-              className="flex-1 overflow-y-auto"
-            >
-              <h3>{block.stepTitle}</h3>
-              <CodeBlock
-                className="h-full overflow-y-auto"
-                {...block}
-              />
-            </div>
-          ))}
+          <CodeBlocks codeBlocks={codeBlock} />
         </div>
         <div className="overflow-hidden">{example}</div>
       </div>

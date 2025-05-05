@@ -1,4 +1,5 @@
 "use client";
+import PrivySetup from "@/components/provider-setup/privy-setup";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -225,7 +226,7 @@ export default function Home() {
                 How to setup <span className="capitalize">{selectedProvider} with ZeroDev?</span>
               </span>
             </AccordionTrigger>
-            <AccordionContent className="border-primary/10 border-2 border-t-0 p-4">
+            <AccordionContent className="border-primary/10 space-y-4 border-2 border-t-0 p-4 text-base">
               <p>
                 To get started with {selectedProvider} you can read the{" "}
                 <Link
@@ -236,6 +237,8 @@ export default function Home() {
                 </Link>
                 .
               </p>
+
+              {selectedProvider === "privy" && <PrivySetup />}
             </AccordionContent>
           </AccordionItem>
         </Accordion>
