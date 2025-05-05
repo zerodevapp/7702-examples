@@ -26,6 +26,7 @@ const batchingExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
         functionName: "transfer",
         args: [toAddress, amount],
       }),
+    },
   ],
 }`,
       },

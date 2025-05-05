@@ -147,6 +147,10 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
         kernelAccount,
         kernelAccountClient,
         ecdsaValidator,
+        intentClient: null,
+        createIntentClient: async () => {
+          throw new Error("Not implemented");
+        },
       }}
     >
       {children}
