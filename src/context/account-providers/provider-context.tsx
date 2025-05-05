@@ -29,7 +29,7 @@ export interface AccountProviderContextInterface {
   sendTransactionMutation: ({ transaction }: { transaction: SendTransactionParameters }) => Promise<`0x${string}`>;
   login: () => Promise<void>;
   kernelAccountClient: KernelAccountClient | undefined | null;
-  kernelAccount: CreateKernelAccountReturnType | SmartAccount | undefined | null;
+  kernelAccount: CreateKernelAccountReturnType<"0.7"> | SmartAccount | undefined | null;
   ecdsaValidator: KernelValidator<"ECDSAValidator"> | undefined | null;
   intentClient: IntentClient | undefined | null;
   createIntentClient: () => Promise<IntentClient>;

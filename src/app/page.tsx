@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import Heading from "@/components/ui/heading";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { useAccountWrapperContext } from "@/context/wrapper";
-import { kernelAddresses, EXPLORER_URL } from "@/lib/constants";
+import { EXPLORER_URL } from "@/lib/constants";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { UserPill as PrivyUserPill } from "@privy-io/react-auth/ui";
 import { Check } from "lucide-react";
@@ -196,16 +196,16 @@ export default function Home() {
                   {embeddedWallet?.address}
                 </a>
               </p>
-              <p>
+              {/* <p>
                 Account Implementation:{" "}
                 <a
                   target="_blank"
                   className="font-medium underline underline-offset-2"
-                  href={`${EXPLORER_URL}/address/${kernelAddresses.accountImplementationAddress}`}
+                  href={`${EXPLORER_URL}/address/${kernelAccount?.authorization?.address}`}
                 >
-                  {kernelAddresses.accountImplementationAddress}
+                  {kernelAccount?.a }
                 </a>
-              </p>
+              </p> */}
 
               {selectedProvider === "privy" ? (
                 <PrivyUserPill />

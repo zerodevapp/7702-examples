@@ -61,29 +61,24 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     return wallets.find((wallet) => wallet.walletClientType === "privy");
   }, [wallets]);
 
-  const { data: ethereumProvider } = useQuery({
-    queryKey: [PROVIDER, "ethereumProvider", !!privyEmbeddedWallet],
-    queryFn: async () => {
-      if (!privyEmbeddedWallet) return null;
-      return await privyEmbeddedWallet.getEthereumProvider();
-    },
-    enabled: !!privyEmbeddedWallet,
-  });
-
   /**
    * Creates a wallet client using the embedded wallet's ethereum provider
    * The configured wallet client or null if not available
    */
-  const walletClient = useMemo(() => {
-    if (!ethereumProvider || !privyEmbeddedWallet) {
-      return null;
-    }
-    return createWalletClient({
-      account: privyEmbeddedWallet.address as Hex,
-      chain: SEPOLIA,
-      transport: custom(ethereumProvider),
-    });
-  }, [privyEmbeddedWallet, ethereumProvider]);
+  const { data: walletClient } = useQuery({
+    queryKey: [PROVIDER, "walletClient", privyEmbeddedWallet?.address],
+    queryFn: async () => {
+      if (!privyEmbeddedWallet) {
+        return null;
+      }
+      return createWalletClient({
+        account: privyEmbeddedWallet.address as Hex,
+        chain: SEPOLIA,
+        transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
+      });
+    },
+    enabled: !!privyEmbeddedWallet,
+  });
 
   /**
    * Creates a public client for blockchain interactions
@@ -95,23 +90,67 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   const basePublicClient = usePublicClient({
     chainId: baseSepolia.id,
   });
+  /**
+   * Creates a paymaster client for handling gas payments
+   * The configured paymaster client or null if public client is not available
+   */
+  const sepoliaPaymasterClient = useMemo(() => {
+    if (!sepoliaPublicClient) return null;
+    return createZeroDevPaymasterClient({
+      chain: SEPOLIA,
+      transport: http(sepoliaPaymasterRpc),
+    });
+  }, [sepoliaPublicClient]);
 
   /**
    * Creates an ECDSA validator for the kernel account
    * The configured validator or null if prerequisites are not met
    */
-  const { data: ecdsaValidator } = useQuery({
-    queryKey: [PROVIDER, "ecdsaValidator", !!sepoliaPublicClient, !!walletClient],
+  const { data: kernelClients } = useQuery({
+    queryKey: [
+      PROVIDER,
+      "kernelClient",
+      walletClient?.account.address,
+      sepoliaPaymasterClient?.name,
+      sepoliaPublicClient?.name,
+    ],
     queryFn: async () => {
-      if (!walletClient || !sepoliaPublicClient) return null;
+      if (!walletClient || !sepoliaPublicClient || !sepoliaPaymasterClient) return null;
 
-      return signerToEcdsaValidator(sepoliaPublicClient, {
+      const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
         signer: walletClient,
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,
       });
+
+      const authorization = await signAuthorization({
+        contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
+        chainId: SEPOLIA.id,
+      });
+
+      const kernelAccount = await createKernelAccount(sepoliaPublicClient, {
+        plugins: {
+          sudo: ecdsaValidator,
+        },
+        entryPoint,
+        kernelVersion,
+        address: walletClient!.account.address,
+        eip7702Auth: authorization,
+        initConfig: [installIntentExecutor(INTENT_V0_4)],
+        pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
+      });
+
+      const kernelAccountClient = createKernelAccountClient({
+        account: kernelAccount,
+        chain: SEPOLIA,
+        bundlerTransport: http(sepoliaBundlerRpc),
+        paymaster: sepoliaPaymasterClient,
+        client: sepoliaPublicClient,
+      });
+
+      return { kernelAccountClient, kernelAccount, ecdsaValidator };
     },
-    enabled: !!sepoliaPublicClient && !!walletClient,
+    enabled: !!sepoliaPublicClient && !!walletClient && !!sepoliaPaymasterClient,
   });
 
   // const { data: webAuthnKey } = useQuery({
@@ -142,75 +181,9 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   //   enabled: !!webAuthnKey && !!publicClient,
   // });
 
-  /**
-   * Creates a kernel account using the ECDSA validator
-   * The configured kernel account or null if prerequisites are not met
-   */
-  const { data: kernelAccount } = useQuery({
-    queryKey: [PROVIDER, "kernel-account", !!sepoliaPublicClient, !!walletClient, !!ecdsaValidator],
-    queryFn: async () => {
-      if (!sepoliaPublicClient) return null;
-
-      const authorization = await signAuthorization({
-        contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
-        chainId: SEPOLIA.id,
-      });
-
-      return createKernelAccount(sepoliaPublicClient, {
-        plugins: {
-          sudo: ecdsaValidator!,
-        },
-        entryPoint,
-        kernelVersion,
-        address: walletClient!.account.address,
-        eip7702Auth: authorization,
-        initConfig: [installIntentExecutor(INTENT_V0_4)],
-        pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
-      });
-    },
-    enabled: !!sepoliaPublicClient && !!walletClient && !!ecdsaValidator,
-    retry: false,
-  });
-
-  /**
-   * Creates a paymaster client for handling gas payments
-   * The configured paymaster client or null if public client is not available
-   */
-  const sepoliaPaymasterClient = useMemo(() => {
-    if (!sepoliaPublicClient) return null;
-    return createZeroDevPaymasterClient({
-      chain: SEPOLIA,
-      transport: http(sepoliaPaymasterRpc),
-    });
-  }, [sepoliaPublicClient]);
-
-  /**
-   * Creates a kernel account client for interacting with the kernel account
-   * The configured kernel account client or null if prerequisites are not met
-   */
-  const kernelAccountClient = useMemo(() => {
-    if (!sepoliaPublicClient || !kernelAccount || !sepoliaPaymasterClient) return null;
-    return createKernelAccountClient({
-      account: kernelAccount,
-      chain: SEPOLIA,
-      bundlerTransport: http(sepoliaBundlerRpc),
-      paymaster: sepoliaPaymasterClient,
-      client: sepoliaPublicClient,
-    });
-    // TODO: send empty userops on both chains (base, sepolia)
-    // for installing the intent executor plugin
-  }, [sepoliaPublicClient, kernelAccount, sepoliaPaymasterClient]);
-
   // intent client
   const { data: intentClient, mutateAsync: createIntentClientMutation } = useMutation({
-    mutationKey: [
-      PROVIDER,
-      "intentClient",
-      !!sepoliaPublicClient,
-      !!walletClient,
-      !!ecdsaValidator,
-      !!sepoliaPaymasterClient,
-    ],
+    mutationKey: [PROVIDER, "intentClient", !!sepoliaPublicClient, !!walletClient, !!sepoliaPaymasterClient],
     mutationFn: async () => {
       if (!basePublicClient) throw new Error("No public client found");
       if (!sepoliaPublicClient) throw new Error("No public client found");
@@ -347,16 +320,16 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   const { mutateAsync: sendUserOperation } = useMutation({
     mutationKey: [PROVIDER, "sendUserOperation"],
     mutationFn: async ({ userOperation }: { userOperation: SendUserOperationParameters }) => {
-      if (!kernelAccountClient) throw new Error("No kernel account client found");
-      return kernelAccountClient.sendUserOperation(userOperation);
+      if (!kernelClients) throw new Error("No kernel account client found");
+      return kernelClients.kernelAccountClient.sendUserOperation(userOperation);
     },
   });
 
   const { mutateAsync: sendTransaction } = useMutation({
     mutationKey: [PROVIDER, "sendTransaction"],
     mutationFn: async ({ transaction }: { transaction: SendTransactionParameters }) => {
-      if (!kernelAccountClient) throw new Error("No kernel account client found");
-      return kernelAccountClient.sendTransaction(transaction);
+      if (!kernelClients) throw new Error("No kernel account client found");
+      return kernelClients.kernelAccountClient.sendTransaction(transaction);
     },
   });
 
@@ -376,12 +349,12 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   });
 
   const { data: isDeployed } = useQuery({
-    queryKey: [PROVIDER, "isDeployed", kernelAccountClient?.account.address],
+    queryKey: [PROVIDER, "isDeployed", kernelClients?.kernelAccount.address],
     queryFn: async () => {
-      if (!kernelAccountClient) return false;
-      return kernelAccountClient.account.isDeployed();
+      if (!kernelClients) return false;
+      return kernelClients.kernelAccount.isDeployed();
     },
-    enabled: !!kernelAccountClient?.account,
+    enabled: !!kernelClients?.kernelAccount,
   });
 
   return (
@@ -393,9 +366,9 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         login: signIn,
         embeddedWallet,
         isDeployed: Boolean(isDeployed),
-        kernelAccountClient,
-        kernelAccount,
-        ecdsaValidator,
+        kernelAccountClient: kernelClients?.kernelAccountClient,
+        kernelAccount: kernelClients?.kernelAccount,
+        ecdsaValidator: kernelClients?.ecdsaValidator,
         intentClient,
         createIntentClient: createIntentClientMutation,
       }}

@@ -24,6 +24,75 @@ export const privySetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDe
     stepDescription: "Setup the Privy context with your credentials. Initialise the 7702 client as follows.",
     files: [
       {
+        name: "client.ts",
+        language: "typescript",
+        content: `// get wallet client from privy
+const privyEmbeddedWallet = useMemo(() => {
+    return wallets.find((wallet) => wallet.walletClientType === "privy");
+}, [wallets]);
+
+const walletClient = useQuery({
+    queryKey: [PROVIDER, "walletClient", privyEmbeddedWallet?.address],
+    queryFn: async () => {
+      if (!privyEmbeddedWallet) {
+        return null;
+      }
+    return createWalletClient({
+      account: privyEmbeddedWallet.address as Hex,
+      chain: SEPOLIA,
+        transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
+      });
+    },
+    enabled: !!privyEmbeddedWallet,
+});
+
+const { data: kernelClients } = useQuery({
+    queryKey: [
+        'privy',
+        "kernelClients",
+        walletClient?.account.address,
+        sepoliaPaymasterClient?.name,
+        sepoliaPublicClient?.name,
+    ],
+    queryFn: async () => {
+        if (!walletClient || !sepoliaPublicClient || !sepoliaPaymasterClient) return null;
+
+        const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
+            signer: walletClient,
+            entryPoint: getEntryPoint("0.7"),
+            kernelVersion: KERNEL_V3_3,
+        });
+
+        const authorization = await signAuthorization({
+            contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
+            chainId: SEPOLIA.id,
+        });
+
+        const kernelAccount = await createKernelAccount(sepoliaPublicClient, {
+            plugins: {
+                sudo: ecdsaValidator,
+            },
+            entryPoint: getEntryPoint("0.7"),
+            kernelVersion: KERNEL_V3_3,
+            address: walletClient.account.address,
+            eip7702Auth: authorization,
+        });
+
+        const kernelAccountClient = createKernelAccountClient({
+            account: kernelAccount,
+            chain: SEPOLIA,
+            bundlerTransport: http(sepoliaBundlerRpc),
+            paymaster: sepoliaPaymasterClient,
+            client: sepoliaPublicClient,
+        });
+
+        return { kernelAccountClient, kernelAccount, ecdsaValidator };
+    },
+    enabled: !!sepoliaPublicClient && !!walletClient && !!sepoliaPaymasterClient,
+});
+`,
+      },
+      {
         name: "context.ts",
         language: "react",
         content: `import { PrivyProvider } from "@privy-io/react-auth";
@@ -45,36 +114,6 @@ export const privySetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDe
         {children}
     </PrivyProvider>
 </WagmiProvider>`,
-      },
-      {
-        name: "client.ts",
-        language: "typescript",
-        content: `const kernelAccount = createKernelAccount(publicClient, {
-  plugins: {
-    sudo: ecdsaValidator!,
-  },
-  entryPoint,
-  kernelVersion,
-  address: walletClient!.account.address,
-  eip7702Auth: authorization,
-});
-
-
-const paymasterClient = createZeroDevPaymasterClient({
-  chain,
-  transport: http(paymasterRpc)
-});
-
-
-
-const kernelAccountClient = createKernelAccountClient({
-  account: kernelAccount,
-  chain,
-  bundlerTransport: http(bundlerRpc),
-  paymaster: paymasterClient,
-  client: publicClient
-});
-`,
       },
     ],
   },
