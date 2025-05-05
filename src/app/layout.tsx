@@ -4,6 +4,7 @@ import { ReactScan } from "@/components/react-scan";
 import batchingExampleCode from "@/app/@batchingExample/code";
 import gasSponsorshipExampleCode from "@/app/@gasSponsorshipExample/code";
 import permissionsExampleCode from "@/app/@permissionsExample/code";
+import chainAbstractionExampleCode from "@/app/@chainAbstractionExample/code";
 import ExampleBlock from "@/components/example/example-block";
 import Footer from "@/components/footer";
 import Navigation from "@/components/navigation";
@@ -42,13 +43,13 @@ export default function RootLayout({
   batchingExample,
   gasSponsorshipExample,
   permissionsExample,
-  // chainAbstractionExample,
+  chainAbstractionExample,
 }: Readonly<{
   children: React.ReactNode;
   batchingExample: React.ReactNode;
   gasSponsorshipExample: React.ReactNode;
   permissionsExample: React.ReactNode;
-  // chainAbstractionExample: React.ReactNode;
+  chainAbstractionExample: React.ReactNode;
 }>) {
   return (
     <html
@@ -123,7 +124,7 @@ export default function RootLayout({
                     </p>
                   }
                 />
-                {/* <ExampleBlock
+                <ExampleBlock
                   index={4}
                   title="Chain Abstraction"
                   docs="https://docs.privy.io/guides/chain-abstraction"
@@ -140,7 +141,7 @@ export default function RootLayout({
                       Chain abstracted balances eliminate the need to track and maintain balances on multiple chains.
                     </p>
                   }
-                /> */}
+                />
               </main>
             </div>
             <Footer />

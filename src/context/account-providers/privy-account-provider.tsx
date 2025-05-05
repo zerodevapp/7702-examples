@@ -189,7 +189,15 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       if (!sepoliaPublicClient) throw new Error("No public client found");
       if (!walletClient) throw new Error("No wallet client found");
       if (!sepoliaPaymasterClient) throw new Error("No paymaster client found");
-      const ecdsaValidator = await toMultiChainECDSAValidator(sepoliaPublicClient, {
+      if (!kernelClients?.ecdsaValidator) throw new Error("No ecdsa validator found");
+
+      const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
+        signer: walletClient,
+        entryPoint: entryPoint,
+        kernelVersion: kernelVersion,
+      });
+
+      const multichainEcdsaValidator = await toMultiChainECDSAValidator(sepoliaPublicClient, {
         signer: walletClient,
         kernelVersion,
         entryPoint,
@@ -206,11 +214,11 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         address: walletClient!.account.address,
         plugins: {
           sudo: ecdsaValidator,
+          regular: multichainEcdsaValidator,
         },
         kernelVersion,
         entryPoint,
         initConfig: [installIntentExecutor(INTENT_V0_4)],
-        // pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
         eip7702Auth: sepoliaAuthorization,
       });
 
