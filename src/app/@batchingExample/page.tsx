@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, formatUnits, parseUnits } from "viem";
@@ -13,7 +13,7 @@ import { sepolia } from "viem/chains";
 import { useBalance } from "wagmi";
 
 const BatchingExample = () => {
-  const { sendUserOperationMutation, embeddedWallet } = useAccountProviderContext();
+  const { kernelAccountClient, embeddedWallet } = useAccountProviderContext();
 
   const [amount, setAmount] = useState("");
   const [toAddress, setToAddress] = useState("");
@@ -30,53 +30,51 @@ const BatchingExample = () => {
   const {
     mutate: sendTransaction,
     isPending,
-    data: txHash,
+    data: userOpHash,
   } = useMutation({
-    mutationKey: ["batching sendUserOperation"],
+    mutationKey: ["batching sendUserOperation", kernelAccountClient?.account?.address, amount, toAddress],
     mutationFn: async () => {
-      if (!embeddedWallet) throw new Error("No embedded wallet found");
+      if (!kernelAccountClient?.account) throw new Error("No kernel account client found");
 
-      return sendUserOperationMutation({
-        userOperation: {
-          calls: [
-            {
-              to: ZERODEV_TOKEN_ADDRESS,
-              value: BigInt(0),
-              data: encodeFunctionData({
-                abi: [
-                  {
-                    name: "mint",
-                    type: "function",
-                    inputs: [
-                      { name: "to", type: "address" },
-                      { name: "amount", type: "uint256" },
-                    ],
-                  },
-                ],
-                functionName: "mint",
-                args: [embeddedWallet.address, parseUnits(amount, ZERODEV_DECIMALS)],
-              }),
-            },
-            {
-              to: ZERODEV_TOKEN_ADDRESS,
-              value: BigInt(0),
-              data: encodeFunctionData({
-                abi: [
-                  {
-                    name: "transfer",
-                    type: "function",
-                    inputs: [
-                      { name: "to", type: "address" },
-                      { name: "amount", type: "uint256" },
-                    ],
-                  },
-                ],
-                functionName: "transfer",
-                args: [toAddress, parseUnits(amount, ZERODEV_DECIMALS)],
-              }),
-            },
-          ],
-        },
+      return kernelAccountClient?.sendUserOperation({
+        calls: [
+          {
+            to: ZERODEV_TOKEN_ADDRESS,
+            value: BigInt(0),
+            data: encodeFunctionData({
+              abi: [
+                {
+                  name: "mint",
+                  type: "function",
+                  inputs: [
+                    { name: "to", type: "address" },
+                    { name: "amount", type: "uint256" },
+                  ],
+                },
+              ],
+              functionName: "mint",
+              args: [kernelAccountClient.account.address, parseUnits(amount, ZERODEV_DECIMALS)],
+            }),
+          },
+          {
+            to: ZERODEV_TOKEN_ADDRESS,
+            value: BigInt(0),
+            data: encodeFunctionData({
+              abi: [
+                {
+                  name: "transfer",
+                  type: "function",
+                  inputs: [
+                    { name: "to", type: "address" },
+                    { name: "amount", type: "uint256" },
+                  ],
+                },
+              ],
+              functionName: "transfer",
+              args: [toAddress, parseUnits(amount, ZERODEV_DECIMALS)],
+            }),
+          },
+        ],
       });
     },
     onSuccess: (data) => {
@@ -87,6 +85,17 @@ const BatchingExample = () => {
       toast.error("Transaction failed");
       console.error(error);
     },
+  });
+
+  const { data: userOpReceipt, isLoading } = useQuery({
+    queryKey: ["userOpReceipt", userOpHash],
+    queryFn: async () => {
+      if (!userOpHash) throw new Error("No transaction hash found");
+      return await kernelAccountClient?.waitForUserOperationReceipt({
+        hash: userOpHash,
+      });
+    },
+    enabled: !!userOpHash,
   });
 
   return (
@@ -120,15 +129,15 @@ const BatchingExample = () => {
         </p>
 
         <Button
-          disabled={isPending}
+          disabled={isPending || isLoading}
           onClick={() => sendTransaction()}
         >
-          {isPending ? "Sending..." : "Send Batched Transaction"}
+          {isPending || isLoading ? "Sending..." : "Send Batched Transaction"}
         </Button>
 
-        {txHash && (
+        {userOpReceipt && (
           <a
-            href={`${EXPLORER_URL}/op/${txHash}`}
+            href={`${EXPLORER_URL}/op/${userOpReceipt.receipt.transactionHash}`}
             target="_blank"
             rel="noopener noreferrer"
             className="text-primary text-sm underline underline-offset-4"

@@ -28,7 +28,7 @@ const ExampleBlock = ({ index, title, docs, github, description, example, codeBl
 
       {/* slot to display /batching/<example> */}
       <div className="example grid flex-1 grid-cols-1 gap-4 p-4 px-6 @3xl:grid-cols-2">
-        <div className="flex max-h-128 flex-col gap-4 overflow-hidden">
+        <div className="flex flex-col gap-4 overflow-hidden">
           <CodeBlocks codeBlocks={codeBlock} />
         </div>
         <div className="overflow-hidden">{example}</div>

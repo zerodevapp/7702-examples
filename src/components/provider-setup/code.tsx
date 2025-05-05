@@ -26,13 +26,16 @@ export const privySetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDe
       {
         name: "client.ts",
         language: "typescript",
-        content: `// get wallet client from privy
+        content: `const kernelVersion = KERNEL_V3_3;
+const kernelAddresses = KernelVersionToAddressesMap[kernelVersion];
+
+// get wallet client from privy
 const privyEmbeddedWallet = useMemo(() => {
     return wallets.find((wallet) => wallet.walletClientType === "privy");
 }, [wallets]);
 
 const walletClient = useQuery({
-    queryKey: [PROVIDER, "walletClient", privyEmbeddedWallet?.address],
+    queryKey: ['privy', "walletClient", privyEmbeddedWallet?.address],
     queryFn: async () => {
       if (!privyEmbeddedWallet) {
         return null;
@@ -40,7 +43,6 @@ const walletClient = useQuery({
     return createWalletClient({
       account: privyEmbeddedWallet.address as Hex,
       chain: SEPOLIA,
-        transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
       });
     },
     enabled: !!privyEmbeddedWallet,

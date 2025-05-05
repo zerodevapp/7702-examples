@@ -4,11 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
-import { SEPOLIA, EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
+import { EXPLORER_URL, SEPOLIA, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { encodeFunctionData, parseUnits } from "viem";
+import { encodeFunctionData } from "viem";
 
 const GasSponsorshipExample = () => {
   const { embeddedWallet, kernelAccount, kernelAccountClient } = useAccountProviderContext();
@@ -19,11 +19,11 @@ const GasSponsorshipExample = () => {
     isPending,
     data: txHash,
   } = useMutation({
-    mutationKey: ["gasSponsorship sendTransaction"],
+    mutationKey: ["gasSponsorship sendTransaction", kernelAccountClient?.account?.address, amount],
     mutationFn: async () => {
-      if (!embeddedWallet) throw new Error("No embedded wallet found");
       if (!kernelAccountClient) throw new Error("No kernel client found");
       if (!kernelAccount) throw new Error("No kernel account found");
+
       return kernelAccountClient.sendTransaction({
         account: kernelAccount,
         to: ZERODEV_TOKEN_ADDRESS,
@@ -40,7 +40,7 @@ const GasSponsorshipExample = () => {
             },
           ],
           functionName: "mint",
-          args: [embeddedWallet?.address, parseUnits(amount, ZERODEV_DECIMALS)],
+          args: [kernelAccount.address, amount],
         }),
         chain: SEPOLIA,
       });

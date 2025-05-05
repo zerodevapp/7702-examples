@@ -5,41 +5,35 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import {
-  sepoliaBundlerRpc,
-  SEPOLIA,
   entryPoint,
-  kernelVersion,
-  sepoliaPaymasterRpc,
   EXPLORER_URL,
+  kernelVersion,
+  SEPOLIA,
+  sepoliaBundlerRpc,
+  sepoliaPaymasterRpc,
   ZERODEV_DECIMALS,
   ZERODEV_TOKEN_ADDRESS,
 } from "@/lib/constants";
 import { ZERODEV_TOKEN_ABI } from "@/lib/constants/zeroDevTokenAbi";
 import { useMutation } from "@tanstack/react-query";
-import { deserializePermissionAccount, serializePermissionAccount, toPermissionValidator } from "@zerodev/permissions";
+import { toPermissionValidator } from "@zerodev/permissions";
 import { CallPolicyVersion, ParamCondition, toCallPolicy } from "@zerodev/permissions/policies";
 import { toECDSASigner } from "@zerodev/permissions/signers";
 import {
   createKernelAccount,
   createKernelAccountClient,
-  CreateKernelAccountReturnType,
   createZeroDevPaymasterClient,
   KernelAccountClient,
 } from "@zerodev/sdk";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useLocalStorage } from "usehooks-ts";
 import { encodeFunctionData, http, parseUnits, zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { usePublicClient } from "wagmi";
 
 const PermissionsExample = () => {
   const [amount, setAmount] = useState<string>("");
-  const [serialisedSessionKey, setSerialisedSessionKey] = useLocalStorage<string | null>("serialisedSessionKey", null);
-  const [sessionAccountAddress, setSessionAccountAddress] = useLocalStorage<`0x${string}` | null>(
-    "sessionAccountAddress",
-    null,
-  );
+  const [sessionAccountAddress, setSessionAccountAddress] = useState<`0x${string}` | null>(null);
 
   const [sessionKernelClient, setSessionKernelClient] = useState<KernelAccountClient | null>(null);
 
@@ -58,66 +52,63 @@ const PermissionsExample = () => {
       throw new Error("Kernel account client not found");
     if (!publicClient) throw new Error("Public client not found");
 
-    let sessionKeyKernelAccount: CreateKernelAccountReturnType;
+    // if (serialisedSessionKey) {
+    //   sessionKeyKernelAccount = await deserializePermissionAccount(
+    //     publicClient,
+    //     entryPoint,
+    //     kernelVersion,
+    //     serialisedSessionKey,
+    //   );
+    // } else {
+    const _sessionPrivateKey = generatePrivateKey();
 
-    if (serialisedSessionKey) {
-      sessionKeyKernelAccount = await deserializePermissionAccount(
-        publicClient,
-        entryPoint,
-        kernelVersion,
-        serialisedSessionKey,
-      );
-    } else {
-      const _sessionPrivateKey = generatePrivateKey();
+    const sessionAccount = privateKeyToAccount(_sessionPrivateKey as `0x${string}`);
 
-      const sessionAccount = privateKeyToAccount(_sessionPrivateKey as `0x${string}`);
+    const sessionKeySigner = await toECDSASigner({
+      signer: sessionAccount,
+    });
 
-      const sessionKeySigner = await toECDSASigner({
-        signer: sessionAccount,
-      });
-
-      const callPolicy = toCallPolicy({
-        policyVersion: CallPolicyVersion.V0_0_4,
-        permissions: [
-          {
-            target: ZERODEV_TOKEN_ADDRESS,
-            valueLimit: BigInt(0),
-            abi: ZERODEV_TOKEN_ABI,
-            functionName: "transfer",
-            args: [
-              {
-                condition: ParamCondition.NOT_EQUAL,
-                value: zeroAddress,
-              },
-              {
-                condition: ParamCondition.LESS_THAN,
-                value: parseUnits("10", ZERODEV_DECIMALS),
-              },
-            ],
-          },
-        ],
-      });
-
-      const permissionPlugin = await toPermissionValidator(publicClient, {
-        entryPoint: entryPoint,
-        kernelVersion: kernelVersion,
-        signer: sessionKeySigner,
-        policies: [callPolicy],
-      });
-
-      sessionKeyKernelAccount = await createKernelAccount(publicClient, {
-        entryPoint,
-        plugins: {
-          sudo: masterEcdsaValidator,
-          regular: permissionPlugin,
+    const callPolicy = toCallPolicy({
+      policyVersion: CallPolicyVersion.V0_0_4,
+      permissions: [
+        {
+          target: ZERODEV_TOKEN_ADDRESS,
+          valueLimit: BigInt(0),
+          abi: ZERODEV_TOKEN_ABI,
+          functionName: "transfer",
+          args: [
+            {
+              condition: ParamCondition.NOT_EQUAL,
+              value: zeroAddress,
+            },
+            {
+              condition: ParamCondition.LESS_THAN,
+              value: parseUnits("10", ZERODEV_DECIMALS),
+            },
+          ],
         },
-        kernelVersion: kernelVersion,
-        address: masterKernelAccount.address,
-      });
-      // save new session account
-      setSessionAccountAddress(sessionAccount.address);
-      setSerialisedSessionKey(await serializePermissionAccount(sessionKeyKernelAccount, _sessionPrivateKey));
-    }
+      ],
+    });
+
+    const permissionPlugin = await toPermissionValidator(publicClient, {
+      entryPoint: entryPoint,
+      kernelVersion: kernelVersion,
+      signer: sessionKeySigner,
+      policies: [callPolicy],
+    });
+
+    const sessionKeyKernelAccount = await createKernelAccount(publicClient, {
+      entryPoint,
+      plugins: {
+        sudo: masterEcdsaValidator,
+        regular: permissionPlugin,
+      },
+      kernelVersion: kernelVersion,
+      address: masterKernelAccount.address,
+    });
+    // save new session account
+    setSessionAccountAddress(sessionAccount.address);
+    // setSerialisedSessionKey(await serializePermissionAccount(sessionKeyKernelAccount, _sessionPrivateKey));
 
     const kernelPaymaster = createZeroDevPaymasterClient({
       chain: SEPOLIA,
@@ -193,9 +184,9 @@ const PermissionsExample = () => {
           </Button>
 
           {sessionKernelClient && (
-            <div className="w-full">
-              <p className="text-sm">Session Account</p>
+            <div className="w-full space-y-2">
               <p className="truncate text-sm">{sessionAccountAddress}</p>
+              <p className="text-sm">This key has permission to transfer less than 10 ZDEV from the master account.</p>
             </div>
           )}
         </div>

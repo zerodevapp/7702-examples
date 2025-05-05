@@ -7,21 +7,26 @@ const batchingExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
       {
         name: "index.js",
         language: "javascript",
-        content: `await kernelClient.sendUserOperation({
-  account: account,
+        content: `await kernelAccountClient.sendUserOperation({
   calls: [
-      {
-        to: '0x3Ad1E36CCC4d781bf73E24533943c745E50c569b',
-        value: BigInt(0),
-        data: '0x',
-      },
-      {
-        to: '0x65A49dF64216bE58F8851A553863658dB7Fe301F',
-        value: BigInt(0),
-        data: '0x',
-      },
-    ],
-  })
+    {
+      to: ZERODEV_TOKEN_ADDRESS,
+      value: BigInt(0),
+      data: encodeFunctionData({
+        abi: ZERODEV_TOKEN_ABI,
+        functionName: "mint",
+        args: [kernelAccountClient.account.address, amount],
+      }),
+    },
+    {
+      to: ZERODEV_TOKEN_ADDRESS,
+      value: BigInt(0),
+      data: encodeFunctionData({
+        abi: ZERODEV_TOKEN_ABI,
+        functionName: "transfer",
+        args: [toAddress, amount],
+      }),
+  ],
 }`,
       },
     ],
