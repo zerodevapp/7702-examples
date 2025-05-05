@@ -4,11 +4,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
-import { EXPLORER_URL, SEPOLIA, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
+import { EXPLORER_URL, SEPOLIA, ZERODEV_TOKEN_ADDRESS, ZERODEV_DECIMALS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
-import { encodeFunctionData } from "viem";
+import { encodeFunctionData, parseUnits } from "viem";
 
 const GasSponsorshipExample = () => {
   const { embeddedWallet, kernelAccount, kernelAccountClient } = useAccountProviderContext();
@@ -40,7 +40,7 @@ const GasSponsorshipExample = () => {
             },
           ],
           functionName: "mint",
-          args: [kernelAccount.address, amount],
+          args: [kernelAccount.address, parseUnits(amount, ZERODEV_DECIMALS)],
         }),
         chain: SEPOLIA,
       });
