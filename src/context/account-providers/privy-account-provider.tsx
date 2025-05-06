@@ -20,12 +20,12 @@ import {
   useWallets,
 } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
+import { create7702KernelAccount, create7702KernelAccountClient, signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import { createIntentClient, getIntentExecutorPluginData, installIntentExecutor, INTENT_V0_4 } from "@zerodev/intent";
 import { toMultiChainECDSAValidator } from "@zerodev/multi-chain-ecdsa-validator";
 import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo, useState } from "react";
-import { createWalletClient, custom, Hex, http, zeroAddress } from "viem";
+import { Address, createWalletClient, custom, Hex, http, TypedData, TypedDataDefinition, zeroAddress } from "viem";
 import { usePublicClient } from "wagmi";
 import {
   AccountProviderContext,
@@ -35,6 +35,8 @@ import {
 } from "./provider-context";
 import { baseSepolia } from "viem/chains";
 import { toast } from "sonner";
+import { toAccount } from "viem/accounts";
+import { signMessage, signTypedData } from "viem/actions";
 /**
  * Constants for the Privy account provider
  */
@@ -118,30 +120,50 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     queryFn: async () => {
       if (!walletClient || !sepoliaPublicClient || !sepoliaPaymasterClient) return null;
 
+      const privySigner = toAccount({
+        address: walletClient.account.address as Hex,
+        signMessage: async ({ message }) => {
+          return signMessage(walletClient, {
+            message,
+          });
+        },
+        signTransaction: async () => {
+          throw new Error("Smart account signer doesn't need to sign transactions");
+        },
+        signTypedData: async (typedData) => {
+          const { primaryType, domain, message, types } =
+            typedData as TypedDataDefinition<TypedData, string>;
+          return signTypedData(walletClient, {
+            primaryType,
+            domain,
+            message,
+            types,
+          });
+        },
+        signAuthorization: async (authorization) => {
+          return signAuthorization({
+            contractAddress: authorization.address as Address,
+            ...authorization,
+          });
+        },
+      });
+
       const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
-        signer: walletClient,
+        signer: privySigner,
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,
       });
 
-      const authorization = await signAuthorization({
-        contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
-        chainId: SEPOLIA.id,
-      });
 
-      const kernelAccount = await createKernelAccount(sepoliaPublicClient, {
-        plugins: {
-          sudo: ecdsaValidator,
-        },
+      const kernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
+        signer: privySigner,
         entryPoint,
         kernelVersion,
-        address: walletClient!.account.address,
-        eip7702Auth: authorization,
-        initConfig: [installIntentExecutor(INTENT_V0_4)],
-        pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
+        // initConfig: [installIntentExecutor(INTENT_V0_4)],
+        // pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
       });
 
-      const kernelAccountClient = createKernelAccountClient({
+      const kernelAccountClient = create7702KernelAccountClient({
         account: kernelAccount,
         chain: SEPOLIA,
         bundlerTransport: http(sepoliaBundlerRpc),
