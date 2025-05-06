@@ -26,7 +26,7 @@ import {
   create7702KernelAccountClient
 } from "@zerodev/ecdsa-validator";
 import { createIntentClient, getIntentExecutorPluginData, installIntentExecutor, INTENT_V0_4, IntentVersionToAddressesMap } from "@zerodev/intent";
-import { toMultiChainECDSAValidator } from "@zerodev/multi-chain-ecdsa-validator";
+import { MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS, toMultiChainECDSAValidator } from "@zerodev/multi-chain-ecdsa-validator";
 import { createZeroDevPaymasterClient, AccountNotFoundError } from "@zerodev/sdk";
 import React, { useEffect, useMemo, useState } from "react";
 import { createWalletClient, custom, Hex, http, zeroAddress, Address, encodeFunctionData, parseAbi, concat, encodeAbiParameters, parseAbiParameters } from "viem";
@@ -70,9 +70,6 @@ export async function installExecutor<
     args: Prettify<InstallExecutorParameters>
 ): Promise<Hash> {
   const { executor, account : account_ = client.account, authorization } = args
-  console.log("==============DEBUG===================");
-  console.log("=authorization");
-  console.log(authorization);
   if (!account_)
       throw new AccountNotFoundError()
   const account = parseAccount(account_) as SmartAccount
@@ -101,6 +98,52 @@ export async function installExecutor<
     authorization
   })
 }
+
+const VALIDATOR_MODULE_TYPE = 1;
+type InstallValidatorParameters = {
+    validator: Address;
+    validatorData: string;
+    account?: SmartAccount;
+    authorization? : SignedAuthorization;
+}
+
+export async function installValidator<
+    account extends SmartAccount | undefined,
+    chain extends Chain | undefined,
+>(
+    client: Client<Transport, chain, account>,
+    args: Prettify<InstallValidatorParameters>
+): Promise<Hash> {
+  const { validator, validatorData, account : account_ = client.account, authorization } = args
+  if (!account_)
+      throw new AccountNotFoundError()
+  const account = parseAccount(account_) as SmartAccount
+
+  return await getAction(
+    client,
+    sendUserOperation,
+    "sendUserOperation"
+  )({
+    account,
+    callData :encodeFunctionData({
+      abi: parseAbi([installModuleFunction]),
+      functionName: "installModule",
+      args: [
+        BigInt(VALIDATOR_MODULE_TYPE),
+        validator,
+        concat([
+          zeroAddress,
+          encodeAbiParameters(
+            parseAbiParameters('bytes validatorData, bytes hookData, bytes selectorData'),
+            [validatorData as `0x{string}`, '0x','0x']
+          )
+        ]) as `0x{string}`,
+      ],
+    }),
+    authorization
+  })
+}
+
 
 
 /**
@@ -410,6 +453,123 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       }
       console.log("installSepoliaIntentPlugin", installSepoliaIntentPlugin);
       console.log("installBaseSepoliaIntentPlugin", installBaseSepoliaIntentPlugin);
+
+      console.log("Installing validator plugins...");
+      const sepoliaValidationConfig = await sepoliaPublicClient.readContract({
+        address: privySigner.address,
+        abi : [{
+          "type": "function",
+          "name": "validationConfig",
+          "inputs": [
+            {
+              "name": "vId",
+              "type": "bytes21",
+              "internalType": "ValidationId"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "tuple",
+              "internalType": "struct ValidationManager.ValidationConfig",
+              "components": [
+                {
+                  "name": "nonce",
+                  "type": "uint32",
+                  "internalType": "uint32"
+                },
+                {
+                  "name": "hook",
+                  "type": "address",
+                  "internalType": "contract IHook"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "view"
+        },],
+        functionName: "validationConfig",
+        args: [concat(['0x01', MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS])]
+      })
+      console.log("sepoliaValidationConfig", sepoliaValidationConfig);
+      if(sepoliaValidationConfig.hook !== zeroAddress) {
+        console.log("Validator already installed on sepolia");
+      } else {
+        const installSepoliaValidatorPlugin = await installValidator(sepoliaKernelAccountClient, {
+          validator: MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS,
+          validatorData: privySigner.address,
+          account: sepoliaKernelAccount,
+        })
+        .then((tx) => {
+          console.log("installed validator plugin on sepolia");
+          toast.success("Installed validator plugin on Sepolia");
+          return tx;
+        })
+        .catch((error) => {
+          console.error("error installing validator plugin on sepolia", error);
+          toast.error("Error installing validator plugin on Sepolia");
+          return null;
+        });
+        console.log("installSepoliaValidatorPlugin", installSepoliaValidatorPlugin);
+      }
+
+      const baseSepoliaValidationConfig = await baseSepoliaPublicClient.readContract({
+        address: privySigner.address,
+        abi : [{
+          "type": "function",
+          "name": "validationConfig",
+          "inputs": [
+            {
+              "name": "vId",
+              "type": "bytes21",
+              "internalType": "ValidationId"
+            }
+          ],
+          "outputs": [
+            {
+              "name": "",
+              "type": "tuple",
+              "internalType": "struct ValidationManager.ValidationConfig",
+              "components": [
+                {
+                  "name": "nonce",
+                  "type": "uint32",
+                  "internalType": "uint32"
+                },
+                {
+                  "name": "hook",
+                  "type": "address",
+                  "internalType": "contract IHook"
+                }
+              ]
+            }
+          ],
+          "stateMutability": "view"
+        },],
+        functionName: "validationConfig",
+        args: [concat(['0x01', MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS])]
+      })
+      console.log("baseSepoliaValidationConfig", baseSepoliaValidationConfig);
+      if(baseSepoliaValidationConfig.hook !== zeroAddress) {
+        console.log("Validator already installed on baseSepolia");
+      } else {
+        const installBaseSepoliaValidatorPlugin = await installValidator(baseSepoliaKernelAccountClient, {
+        validator: MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS,
+        validatorData: privySigner.address,
+        account: baseSepoliaKernelAccount,
+      })
+      .then((tx) => {
+        console.log("installed validator plugin on baseSepolia");
+        toast.success("Installed validator plugin on Base Sepolia");
+        return tx;
+      })
+        .catch((error) => {
+          console.error("error installing validator plugin on baseSepolia", error);
+          toast.error("Error installing validator plugin on Base Sepolia");
+          return null;
+        });
+        console.log("installBaseSepoliaValidatorPlugin", installBaseSepoliaValidatorPlugin);
+      }
 
       return baseSepoliaIntentClient;
     },
