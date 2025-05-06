@@ -3,13 +3,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-  sepoliaBundlerRpc,
-  SEPOLIA,
   entryPoint,
   kernelAddresses,
   kernelVersion,
-  sepoliaPaymasterRpc,
   PROJECT_ID,
+  SEPOLIA,
+  sepoliaBundlerRpc,
+  sepoliaPaymasterRpc,
 } from "@/lib/constants";
 import {
   useCreateWallet,
@@ -20,12 +20,20 @@ import {
   useWallets,
 } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { create7702KernelAccount, create7702KernelAccountClient, signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
-import { createIntentClient, getIntentExecutorPluginData, installIntentExecutor, INTENT_V0_4 } from "@zerodev/intent";
+import {
+  create7702KernelAccount,
+  create7702KernelAccountClient,
+  signerToEcdsaValidator,
+} from "@zerodev/ecdsa-validator";
+import { createIntentClient, installIntentExecutor, INTENT_V0_4 } from "@zerodev/intent";
 import { toMultiChainECDSAValidator } from "@zerodev/multi-chain-ecdsa-validator";
-import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
+import { createKernelAccount, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { Address, createWalletClient, custom, Hex, http, TypedData, TypedDataDefinition, zeroAddress } from "viem";
+import { toAccount } from "viem/accounts";
+import { signMessage, signTypedData } from "viem/actions";
+import { baseSepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 import {
   AccountProviderContext,
@@ -33,10 +41,6 @@ import {
   SendTransactionParameters,
   SendUserOperationParameters,
 } from "./provider-context";
-import { baseSepolia } from "viem/chains";
-import { toast } from "sonner";
-import { toAccount } from "viem/accounts";
-import { signMessage, signTypedData } from "viem/actions";
 /**
  * Constants for the Privy account provider
  */
@@ -131,8 +135,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
           throw new Error("Smart account signer doesn't need to sign transactions");
         },
         signTypedData: async (typedData) => {
-          const { primaryType, domain, message, types } =
-            typedData as TypedDataDefinition<TypedData, string>;
+          const { primaryType, domain, message, types } = typedData as TypedDataDefinition<TypedData, string>;
           return signTypedData(walletClient, {
             primaryType,
             domain,
@@ -154,13 +157,10 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         kernelVersion: kernelVersion,
       });
 
-
       const kernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
         signer: privySigner,
         entryPoint,
         kernelVersion,
-        // initConfig: [installIntentExecutor(INTENT_V0_4)],
-        // pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
       });
 
       const kernelAccountClient = create7702KernelAccountClient({
@@ -175,34 +175,6 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     },
     enabled: !!sepoliaPublicClient && !!walletClient && !!sepoliaPaymasterClient,
   });
-
-  // const { data: webAuthnKey } = useQuery({
-  //   queryKey: ["webAuthnKey"],
-  //   queryFn: async () => {
-  //     return await toWebAuthnKey({
-  //       passkeyName: "7702 Examples Passkey",
-  //       passkeyServerUrl: "https://passkeys.zerodev.app/api/v3/fefe0be1-b3db-4eff-bbb7-750485bd732c",
-  //       mode: WebAuthnMode.Register,
-  //       passkeyServerHeaders: {},
-  //     });
-  //   },
-  // });
-
-  // const { data: passkeyValidator } = useQuery({
-  //   queryKey: ["passkeyValidator"],
-  //   queryFn: async () => {
-  //     if (!webAuthnKey) return null;
-  //     if (!publicClient) return null;
-
-  //     return await toPasskeyValidator(publicClient, {
-  //       webAuthnKey,
-  //       entryPoint: entryPoint,
-  //       kernelVersion: kernelVersion,
-  //       validatorContractVersion: PasskeyValidatorContractVersion.V0_0_2,
-  //     });
-  //   },
-  //   enabled: !!webAuthnKey && !!publicClient,
-  // });
 
   // intent client
   const { data: intentClient, mutateAsync: createIntentClientMutation } = useMutation({
