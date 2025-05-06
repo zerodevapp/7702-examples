@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, parseUnits } from "viem";
 import { sepolia } from "viem/chains";
 
 const GasSponsorshipExample = () => {
-  const { embeddedWallet, kernelAccount, kernelAccountClient } = useAccountProviderContext();
+  const { embeddedWallet, kernelAccount, kernelAccountClient, provider } = useAccountProviderContext();
   const [amount, setAmount] = useState("");
 
   const {
@@ -56,45 +56,90 @@ const GasSponsorshipExample = () => {
     },
   });
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const signInTooltipRef = useRef<HTMLDivElement>(null);
+
+  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccount, [embeddedWallet, kernelAccount]);
+
+  useEffect(() => {
+    const signInTooltip = signInTooltipRef.current;
+    const container = containerRef.current;
+    if (!isDisabled) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      signInTooltip?.style.setProperty("left", `${e.clientX + 10}px`);
+      signInTooltip?.style.setProperty("top", `${e.clientY + 10}px`);
+    };
+    const handleMouseEnter = () => {
+      signInTooltip?.style.setProperty("opacity", "1");
+    };
+    const handleMouseLeave = () => {
+      signInTooltip?.style.setProperty("opacity", "0");
+    };
+    if (signInTooltip && container) {
+      // follow mouse within the container
+      container.addEventListener("mousemove", handleMouseMove);
+      container.addEventListener("mouseenter", handleMouseEnter);
+      container.addEventListener("mouseleave", handleMouseLeave);
+    }
+    return () => {
+      signInTooltip?.removeEventListener("mousemove", handleMouseMove);
+      container?.removeEventListener("mouseenter", handleMouseEnter);
+      container?.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [isDisabled]);
+
   return (
-    <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
-      <h4 className="text-lg font-medium">Sponsor a Transaction</h4>
-
-      <div
-        className="flex w-full flex-col gap-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-        aria-disabled={!embeddedWallet || !kernelAccount}
-      >
-        <div className="flex items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">Mint ZDEV Token</Badge>
-          <Input
-            className="bg-background"
-            type="text"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-
-        <Button
-          disabled={isPending}
-          onClick={() => sendSponsoredTransaction()}
+    <>
+      {/* sign in tool tip */}
+      {isDisabled && (
+        <div
+          ref={signInTooltipRef}
+          className="border-primary bg-background fixed top-0 left-0 z-[99] max-w-xs border-2 p-4 text-sm opacity-0"
         >
-          {isPending ? "Sending..." : "Send Sponsored Transaction"}
-        </Button>
+          Sign in with <span className="capitalize">{provider}</span> to try out the examples!
+        </div>
+      )}
+      <div
+        className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        ref={containerRef}
+        aria-disabled={isDisabled}
+      >
+        <h4 className="text-lg font-medium">Sponsor a Transaction</h4>
 
-        {/* Tx link */}
-        {txHash && (
-          <a
-            href={`${EXPLORER_URL}/tx/${txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary text-sm underline underline-offset-4"
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <Badge className="h-9 text-sm font-medium">Mint ZDEV Token</Badge>
+            <Input
+              className="bg-background"
+              type="text"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+
+          <Button
+            disabled={isPending}
+            onClick={() => sendSponsoredTransaction()}
           >
-            View Sponsored Transaction
-          </a>
-        )}
+            {isPending ? "Sending..." : "Send Sponsored Transaction"}
+          </Button>
+
+          {/* Tx link */}
+          {txHash && (
+            <a
+              href={`${EXPLORER_URL}/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary text-sm underline underline-offset-4"
+            >
+              View Sponsored Transaction
+            </a>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
