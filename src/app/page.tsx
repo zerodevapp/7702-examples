@@ -8,7 +8,7 @@ import { useAccountProviderContext } from "@/context/account-providers/provider-
 import { useAccountWrapperContext } from "@/context/wrapper";
 import { EXPLORER_URL } from "@/lib/constants";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
-import { UserPill as PrivyUserPill } from "@privy-io/react-auth/ui";
+import { UserPill as PrivyUserPill, UserPill } from "@privy-io/react-auth/ui";
 import { Check } from "lucide-react";
 import Link from "next/link";
 
@@ -144,15 +144,15 @@ export default function Home() {
                 Turnkey
               </Button>
               <Button
-                variant={selectedProvider === "browser" ? "active" : "default"}
-                onClick={() => setSelectedProvider("browser")}
+                variant={selectedProvider === "local" ? "active" : "default"}
+                onClick={() => setSelectedProvider("local")}
               >
-                {selectedProvider === "browser" && (
+                {selectedProvider === "local" && (
                   <div className="bg-primary absolute top-0 right-0 h-4 w-4 p-0.5 text-white">
                     <Check className="m-auto size-3" />
                   </div>
                 )}
-                Browser Wallet
+                Local Wallet
               </Button>
             </div>
           </div>
@@ -160,14 +160,16 @@ export default function Home() {
             <>
               {selectedProvider === "dynamic" ? (
                 <DynamicWidget />
+              ) : selectedProvider === "privy" ? (
+                <UserPill />
               ) : (
                 <Button
-                  variant="outline"
+                  variant="cta"
                   onClick={() => {
                     login();
                   }}
                 >
-                  Sign In with <span className="capitalize">{selectedProvider}</span>
+                  Create 7702 Account with <span className="capitalize">{selectedProvider}</span>
                 </Button>
               )}
             </>

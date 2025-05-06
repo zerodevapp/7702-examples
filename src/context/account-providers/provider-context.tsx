@@ -8,7 +8,7 @@ import { sendTransaction } from "viem/actions";
 export type SendTransactionParameters = Parameters<typeof sendTransaction>[1];
 export type SendUserOperationParameters = ViemSendUserOperationParameters;
 
-export const accountProviders = ["privy", "dynamic", "turnkey", "browser"] as const;
+export const accountProviders = ["privy", "dynamic", "turnkey", "local"] as const;
 export type AccountProviders = (typeof accountProviders)[number];
 
 export type EmbeddedWallet = {

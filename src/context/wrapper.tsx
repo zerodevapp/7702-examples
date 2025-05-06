@@ -23,7 +23,7 @@ export const AccountProviderContext = createContext<{
 const wagmiConfig = createConfig({
   chains: [sepolia, baseSepolia],
   transports: {
-    [sepolia.id]: http(),
+    [sepolia.id]: http("https://0xrpc.io/sep"),
     [baseSepolia.id]: http(),
   },
 });

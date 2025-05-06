@@ -15,6 +15,10 @@ const buttonVariants = cva(
           "before:absolute before:inset-0 before:z-[-1] before:h-full before:w-full before:bg-[radial-gradient(#00000010_1px,transparent_1px)] before:[background-size:8px_8px] before:opacity-0 before:transition-opacity hover:before:opacity-100",
           "hover:shadow-primary hover:shadow-[3px_3px_0_0_var(--tw-shadow-color)]",
         ),
+        cta: cn(
+          "bg-primary/25 text-primary border-primary border-2",
+          "hover:shadow-primary hover:shadow-[3px_3px_0_0_var(--tw-shadow-color)]",
+        ),
         active: cn(
           "bg-background text-primary border-primary border-2",
           "before:absolute before:inset-0 before:z-[-1] before:h-full before:w-full before:bg-white before:bg-[radial-gradient(#00000010_1px,transparent_1px)] before:[background-size:8px_8px]",

@@ -5,7 +5,7 @@ const gasSponsorshipExampleCode: Array<CodeBlockProps & { stepTitle?: string }> 
     type: "files",
     files: [
       {
-        name: "index.ts",
+        name: "sendTransaction.ts",
         language: "typescript",
         content: `kernelAccountClient.sendTransaction({
   account: kernelAccount,
@@ -17,6 +17,26 @@ const gasSponsorshipExampleCode: Array<CodeBlockProps & { stepTitle?: string }> 
     args: [kernelAccount.address, amount],
   }),
 })`,
+      },
+      {
+        name: "kernelClient.ts",
+        language: "typescript",
+        content: `const paymasterClient = createZeroDevPaymasterClient({
+  chain: sepolia,
+  transport: http(sepoliaPaymasterRpc),
+});
+
+const kernelAccount = await createKernelAccount(...);
+
+const kernelAccountClient = createKernelAccountClient({
+  paymaster: sepoliaPaymasterClient,
+  // ...
+  account: kernelAccount,
+  chain: sepolia,
+  bundlerTransport: http(sepoliaBundlerRpc),
+  client: sepoliaPublicClient,
+});
+`,
       },
     ],
   },

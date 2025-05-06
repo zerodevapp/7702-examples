@@ -82,7 +82,7 @@ const GasSponsorshipExample = () => {
       <h4 className="text-lg font-medium">Sponsor a Transaction</h4>
 
       <div
-        className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        className="flex w-full flex-col gap-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
         aria-disabled={!embeddedWallet}
       >
         <div className="flex items-center gap-2">

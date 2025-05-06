@@ -225,6 +225,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         kernelVersion,
         entryPoint,
         initConfig: [installIntentExecutor(INTENT_V0_4)],
+        pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
         eip7702Auth: sepoliaAuthorization,
       });
 
@@ -236,6 +237,25 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         version: INTENT_V0_4,
         paymaster: sepoliaPaymasterClient,
       });
+
+      toast.info("Installing intent executor plugins...");
+      // empty userop to install the intent executor plugin
+      const installSepoliaIntentPlugin = await sepoliaIntentClient
+        .sendTransaction({
+          to: zeroAddress,
+          value: BigInt(0),
+          data: "0x",
+        })
+        .then((tx) => {
+          console.log("installed intent executor plugin on sepolia");
+          toast.success("Installed intent executor plugin on Sepolia");
+          return tx;
+        })
+        .catch((error) => {
+          console.error("error installing intent executor plugin on sepolia", error);
+          toast.error("Error installing intent executor plugin on Sepolia");
+          return null;
+        });
 
       const baseSepoliaPaymasterClient = createZeroDevPaymasterClient({
         chain: baseSepolia,
@@ -255,6 +275,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         kernelVersion,
         entryPoint,
         initConfig: [installIntentExecutor(INTENT_V0_4)],
+        pluginMigrations: [getIntentExecutorPluginData(INTENT_V0_4)],
         eip7702Auth: baseSepoliaAuthorization,
       });
 
@@ -266,26 +287,6 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         version: INTENT_V0_4,
         paymaster: baseSepoliaPaymasterClient,
       });
-
-      return baseSepoliaIntentClient;
-      toast.info("Installing intent executor plugins...");
-      // empty userop to install the intent executor plugin
-      const installSepoliaIntentPlugin = await sepoliaIntentClient
-        .sendTransaction({
-          to: zeroAddress,
-          value: BigInt(0),
-          data: "0x",
-        })
-        .then((tx) => {
-          console.log("installed intent executor plugin on sepolia");
-          toast.success("Installed intent executor plugin on Sepolia");
-          return tx;
-        })
-        .catch((error) => {
-          console.error("error installing intent executor plugin on sepolia", error);
-          toast.error("Error installing intent executor plugin on Sepolia");
-          return null;
-        });
       const installBaseSepoliaIntentPlugin = await baseSepoliaIntentClient
         .sendTransaction({
           to: zeroAddress,

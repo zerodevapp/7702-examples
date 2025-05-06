@@ -68,27 +68,36 @@ const ChainAbstractionExample = () => {
             value: BigInt(0),
             data: encodeFunctionData({
               abi: erc20Abi,
-              functionName: "approve",
-              args: [ZERODEV_TOKEN_ADDRESS, parseUnits(amount, 6)],
+              functionName: "transfer",
+              args: ["0x65A49dF64216bE58F8851A553863658dB7Fe301F", parseUnits(amount, 6)],
             }),
           },
-          {
-            to: ZERODEV_TOKEN_ADDRESS,
-            value: BigInt(0),
-            data: encodeFunctionData({
-              abi: ZERODEV_TOKEN_ABI,
-              functionName: "swap",
-              args: [parseUnits(amount, 6), kernelAccountClient.account.address, kernelAccountClient.account.address],
-            }),
-          },
+          // {
+          //   to: SEPOLIA_USDC_ADDRESS,
+          //   value: BigInt(0),
+          //   data: encodeFunctionData({
+          //     abi: erc20Abi,
+          //     functionName: "approve",
+          //     args: [ZERODEV_TOKEN_ADDRESS, parseUnits(amount, 6)],
+          //   }),
+          // },
+          // {
+          //   to: ZERODEV_TOKEN_ADDRESS,
+          //   value: BigInt(0),
+          //   data: encodeFunctionData({
+          //     abi: ZERODEV_TOKEN_ABI,
+          //     functionName: "swap",
+          //     args: [parseUnits(amount, 6), kernelAccountClient.account.address, kernelAccountClient.account.address],
+          //   }),
+          // },
         ],
-        inputTokens: [
-          {
-            chainId: baseSepolia.id,
-            address: BASE_USDC_ADDRESS,
-            amount: parseUnits(amount, 6),
-          },
-        ],
+        // inputTokens: [
+        //   {
+        //     chainId: baseSepolia.id,
+        //     address: BASE_USDC_ADDRESS,
+        //     amount: parseUnits(amount, 6),
+        //   },
+        // ],
         outputTokens: [
           {
             chainId: sepolia.id,
@@ -164,7 +173,7 @@ const ChainAbstractionExample = () => {
         </Button>
       ) : null}
 
-      <div className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4">
+      <div className="flex w-full flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="h-9 text-sm font-medium">1. Swap USDC (Base) to ZDEV (Sepolia)</Badge>
           <Input

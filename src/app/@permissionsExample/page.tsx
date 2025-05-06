@@ -172,7 +172,7 @@ const PermissionsExample = () => {
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
       <h4 className="text-lg font-medium">Permissions</h4>
 
-      <div className="flex w-full flex-col gap-4 border border-violet-500 bg-violet-500/5 p-4">
+      <div className="flex w-full flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="h-9 text-sm font-medium">1. Create a session key</Badge>
 

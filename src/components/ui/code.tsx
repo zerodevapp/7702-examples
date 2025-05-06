@@ -52,7 +52,7 @@ function CodeBlock({ ...props }: CodeBlockProps) {
 }
 
 const PackageTabs = ({ packageManagers, className }: { packageManagers: Command[]; className?: string }) => {
-  const [selectedPackage, setSelectedPackage] = useLocalStorage("package-manager", packageManagers[0].command || "npm");
+  const [selectedPackage, setSelectedPackage] = useLocalStorage("package-manager", packageManagers[0].type || "npm");
 
   return (
     <Tabs
