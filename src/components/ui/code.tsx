@@ -1,14 +1,12 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
-import { Check, Copy } from "lucide-react";
-import { useCallback, useState } from "react";
-import { toast } from "sonner";
-import { useLocalStorage } from "usehooks-ts";
+import { useState } from "react";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import { docco } from "react-syntax-highlighter/dist/esm/styles/hljs";
+import { useLocalStorage } from "usehooks-ts";
+import { CopyButton } from "./copy-button";
 
 export interface Command {
   type: string;
@@ -73,7 +71,7 @@ const PackageTabs = ({ packageManagers, className }: { packageManagers: Command[
         ))}
         <CopyButton
           className="mr-1 ml-auto"
-          content={packageManagers.find((pm) => pm.type === selectedPackage)?.command || ""}
+          copyValue={packageManagers.find((pm) => pm.type === selectedPackage)?.command || ""}
         />
       </TabsList>
 
@@ -113,7 +111,7 @@ const FileTabs = ({ files, className }: { files: CodeFile[]; className?: string 
         ))}
         <CopyButton
           className="mr-1 ml-auto"
-          content={files.find((file) => file.name === selectedFile)?.content || ""}
+          copyValue={files.find((file) => file.name === selectedFile)?.content || ""}
         />
       </TabsList>
 
@@ -148,27 +146,6 @@ const FileTabs = ({ files, className }: { files: CodeFile[]; className?: string 
         </TabsContent>
       ))}
     </Tabs>
-  );
-};
-
-const CopyButton = ({ content, className }: { content: string; className?: string }) => {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = useCallback(() => {
-    navigator.clipboard.writeText(content).then(() => {
-      toast.success("Copied to clipboard");
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
-  }, [content]);
-  return (
-    <Button
-      variant="outline"
-      size="sm"
-      className={cn("h-7 w-7 p-0", className)}
-      onClick={handleCopy}
-    >
-      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
-    </Button>
   );
 };
 

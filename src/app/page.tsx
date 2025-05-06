@@ -3,6 +3,7 @@ import PrivySetup from "@/components/provider-setup/privy-setup";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import Heading from "@/components/ui/heading";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { useAccountWrapperContext } from "@/context/wrapper";
@@ -11,6 +12,7 @@ import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { UserPill as PrivyUserPill, UserPill } from "@privy-io/react-auth/ui";
 import { Check } from "lucide-react";
 import Link from "next/link";
+import { toast } from "sonner";
 
 export default function Home() {
   const { accountProvider: selectedProvider, setAccountProvider: setSelectedProvider } = useAccountWrapperContext();
@@ -197,6 +199,10 @@ export default function Home() {
                 >
                   {embeddedWallet?.address}
                 </a>
+                <CopyButton
+                  copyValue={embeddedWallet.address}
+                  onCopy={() => toast.success("Copied Address to clipboard")}
+                />
               </p>
               {/* <p>
                 Account Implementation:{" "}
