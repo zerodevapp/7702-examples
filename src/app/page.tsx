@@ -22,44 +22,21 @@ export default function Home() {
   return (
     <>
       <section className="space-y-8">
-        <Heading>Introduction to 7702</Heading>
+        <Heading>Introduction</Heading>
         <div className="space-y-4 px-6">
           <p className="">
-            EIP-7702 introduces a new concept to Ethereum which allows Externally Owned Wallets to have smart-contract
-            like code.
+            EIP-7702 is an Ethereum update that allows externally owned accounts (EOAs) to upgrade into smart accounts.  In practical terms, this means that EOA wallets can now enjoy the benefits of account abstraction, such as gas sponsorship, transaction batching, transaction automation, and even chain abstraction.
           </p>
           <p className="">
-            ZeroDev, an account abstraction infrastructure allows you to use 7702 for various groundbreaking use cases.
+            This guide assumes that you are building a dapp with embedded wallets powered by XXX.  We will walk you through:
           </p>
-          <p className="">
-            Explore the 7702 magic with the live examples below. To get started with 7702 you can read the{" "}
-            <Link
-              href="/docs"
-              className="text-primary underline underline-offset-4"
-            >
-              docs
-            </Link>{" "}
-            and set up a project on the{" "}
-            <Link
-              href="/dashboard"
-              className="text-primary underline underline-offset-4"
-            >
-              ZeroDev Dashboard
-            </Link>
-            .
-          </p>
-        </div>
-
-        {/* Table of contents for the examples */}
-        <div className="space-y-4 px-6">
-          <h2 className="font-mono text-xl">Table of Contents</h2>
           <ul className="list-disc pl-8">
             <li>
               <Link
                 className="text-primary underline underline-offset-4"
-                href="#batching"
+                href="#setup"
               >
-                Batching
+                Upgrading your wallets into smart accounts
               </Link>
             </li>
             <li>
@@ -67,7 +44,15 @@ export default function Home() {
                 className="text-primary underline underline-offset-4"
                 href="#gas-sponsorship"
               >
-                Gas Sponsorship
+                Sponsor gas for users
+              </Link>
+            </li>
+            <li>
+              <Link
+                className="text-primary underline underline-offset-4"
+                href="#batching"
+              >
+                Batch transactions
               </Link>
             </li>
             <li>
@@ -75,15 +60,7 @@ export default function Home() {
                 className="text-primary underline underline-offset-4"
                 href="#permissions"
               >
-                Permissions
-              </Link>
-            </li>
-            <li>
-              <Link
-                className="text-primary underline underline-offset-4"
-                href="#chain-abstraction"
-              >
-                Chain Abstraction
+                Automate transactions
               </Link>
             </li>
           </ul>
@@ -93,13 +70,15 @@ export default function Home() {
       <section className="mb-12 space-y-8">
         <Heading>Examples</Heading>
 
-        <Heading
-          as="h3"
-          className="text-lg"
-          variant="secondary"
-        >
-          Select an Account Provider
-        </Heading>
+        <div id="setup">
+          <Heading
+            as="h3"
+            className="text-lg"
+            variant="secondary"
+          >
+            Setup: Upgrading Your Wallets into Smart Accounts
+          </Heading>
+        </div>
 
         <div className="space-y-4 px-6">
           <p className="">
@@ -231,7 +210,7 @@ export default function Home() {
           <AccordionItem value="privy">
             <AccordionTrigger className="border-primary/10 cursor-pointer border-2 px-4 underline-offset-4">
               <span className="text-base">
-                How to setup <span className="capitalize">{selectedProvider} with ZeroDev?</span>
+                Implementation Details
               </span>
             </AccordionTrigger>
             <AccordionContent className="border-primary/10 space-y-4 border-2 border-t-0 p-4 text-base">

@@ -12,20 +12,16 @@ const Navigation = () => {
         </div>
         <nav className="flex gap-6">
           <Link
-            href="/docs"
+            href="https://docs.zerodev.app"
             className="hover:text-primary px-4 py-2"
           >
             Docs
           </Link>
           <Link
-            href="/dashboard"
+            href="https://eips.ethereum.org/EIPS/eip-7702"
             className="hover:text-primary px-4 py-2"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/eip"
-            className="hover:text-primary px-4 py-2"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             EIP
           </Link>
