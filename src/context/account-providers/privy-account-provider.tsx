@@ -11,6 +11,8 @@ import {
   sepoliaBundlerRpc,
   sepoliaPaymasterRpc,
 } from "@/lib/constants";
+import { checkInstallation } from "@/lib/intent/checkInstallation";
+import { installExecutor, installValidator } from "@/lib/intent/install";
 import {
   useCreateWallet,
   useLogin,
@@ -27,38 +29,13 @@ import {
 } from "@zerodev/ecdsa-validator";
 import { createIntentClient, INTENT_V0_4, IntentVersionToAddressesMap } from "@zerodev/intent";
 import { MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS } from "@zerodev/multi-chain-ecdsa-validator";
-import { AccountNotFoundError, createZeroDevPaymasterClient } from "@zerodev/sdk";
+import { createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo, useState } from "react";
-import type {
-  Chain,
-  Client,
-  Hash,
-  Prettify,
-  SignedAuthorization,
-  Transport,
-  TypedData,
-  TypedDataDefinition,
-} from "viem";
-import {
-  Address,
-  concat,
-  createWalletClient,
-  custom,
-  encodeAbiParameters,
-  encodeFunctionData,
-  Hex,
-  http,
-  parseAbi,
-  parseAbiParameters,
-  zeroAddress,
-} from "viem";
-import { type SmartAccount, sendUserOperation } from "viem/account-abstraction";
-import { parseAccount, toAccount } from "viem/accounts";
-import { getAction } from "viem/utils";
-
-import { signMessage, signTypedData } from "viem/actions";
-
 import { toast } from "sonner";
+import type { TypedData, TypedDataDefinition } from "viem";
+import { Address, createWalletClient, custom, Hex, http, zeroAddress } from "viem";
+import { toAccount } from "viem/accounts";
+import { signMessage, signTypedData } from "viem/actions";
 import { baseSepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 import {
@@ -71,86 +48,6 @@ import {
  * Constants for the Privy account provider
  */
 const PROVIDER = "privy";
-
-type InstallExecutorParameters = {
-  executor: Address;
-  account?: SmartAccount;
-  authorization?: SignedAuthorization;
-};
-
-const EXECUTOR_MODULE_TYPE = 2;
-const installModuleFunction = "function installModule(uint256 _type, address _module, bytes calldata _initData)";
-export async function installExecutor<account extends SmartAccount | undefined, chain extends Chain | undefined>(
-  client: Client<Transport, chain, account>,
-  args: Prettify<InstallExecutorParameters>,
-): Promise<Hash> {
-  const { executor, account: account_ = client.account, authorization } = args;
-  if (!account_) throw new AccountNotFoundError();
-  const account = parseAccount(account_) as SmartAccount;
-
-  return await getAction(
-    client,
-    sendUserOperation,
-    "sendUserOperation",
-  )({
-    account,
-    callData: encodeFunctionData({
-      abi: parseAbi([installModuleFunction]),
-      functionName: "installModule",
-      args: [
-        BigInt(EXECUTOR_MODULE_TYPE),
-        executor,
-        concat([
-          zeroAddress,
-          encodeAbiParameters(parseAbiParameters("bytes executorData, bytes hookData"), ["0x", "0x"]),
-        ]) as `0x{string}`,
-      ],
-    }),
-    authorization,
-  });
-}
-
-const VALIDATOR_MODULE_TYPE = 1;
-type InstallValidatorParameters = {
-  validator: Address;
-  validatorData: string;
-  account?: SmartAccount;
-  authorization?: SignedAuthorization;
-};
-
-export async function installValidator<account extends SmartAccount | undefined, chain extends Chain | undefined>(
-  client: Client<Transport, chain, account>,
-  args: Prettify<InstallValidatorParameters>,
-): Promise<Hash> {
-  const { validator, validatorData, account: account_ = client.account, authorization } = args;
-  if (!account_) throw new AccountNotFoundError();
-  const account = parseAccount(account_) as SmartAccount;
-
-  return await getAction(
-    client,
-    sendUserOperation,
-    "sendUserOperation",
-  )({
-    account,
-    callData: encodeFunctionData({
-      abi: parseAbi([installModuleFunction]),
-      functionName: "installModule",
-      args: [
-        BigInt(VALIDATOR_MODULE_TYPE),
-        validator,
-        concat([
-          zeroAddress,
-          encodeAbiParameters(parseAbiParameters("bytes validatorData, bytes hookData, bytes selectorData"), [
-            validatorData as `0x{string}`,
-            "0x",
-            "0x",
-          ]),
-        ]) as `0x{string}`,
-      ],
-    }),
-    authorization,
-  });
-}
 
 /**
  * PrivyAccountProvider is a React component that manages authentication and wallet functionality
@@ -178,16 +75,42 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
    * Creates a wallet client using the embedded wallet's ethereum provider
    * The configured wallet client or null if not available
    */
-  const { data: walletClient } = useQuery({
+  const { data: privyAccount } = useQuery({
     queryKey: [PROVIDER, "walletClient", privyEmbeddedWallet?.address],
     queryFn: async () => {
       if (!privyEmbeddedWallet) {
         return null;
       }
-      return createWalletClient({
+      const walletClient = createWalletClient({
         account: privyEmbeddedWallet.address as Hex,
         chain: SEPOLIA,
         transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
+      });
+      return toAccount({
+        address: privyEmbeddedWallet.address as Hex,
+        signMessage: async ({ message }) => {
+          return signMessage(walletClient, {
+            message,
+          });
+        },
+        signTransaction: async () => {
+          throw new Error("Smart account signer doesn't need to sign transactions");
+        },
+        signTypedData: async (typedData) => {
+          const { primaryType, domain, message, types } = typedData as TypedDataDefinition<TypedData, string>;
+          return signTypedData(walletClient, {
+            primaryType,
+            domain,
+            message,
+            types,
+          });
+        },
+        signAuthorization: async (authorization) => {
+          return signAuthorization({
+            contractAddress: authorization.address as Address,
+            ...authorization,
+          });
+        },
       });
     },
     enabled: !!privyEmbeddedWallet,
@@ -223,47 +146,21 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     queryKey: [
       PROVIDER,
       "kernelClient",
-      walletClient?.account.address,
+      privyAccount?.address,
       sepoliaPaymasterClient?.name,
       sepoliaPublicClient?.name,
     ],
     queryFn: async () => {
-      if (!walletClient || !sepoliaPublicClient || !sepoliaPaymasterClient) return null;
-      const privySigner = toAccount({
-        address: walletClient.account.address as Hex,
-        signMessage: async ({ message }) => {
-          return signMessage(walletClient, {
-            message,
-          });
-        },
-        signTransaction: async () => {
-          throw new Error("Smart account signer doesn't need to sign transactions");
-        },
-        signTypedData: async (typedData) => {
-          const { primaryType, domain, message, types } = typedData as TypedDataDefinition<TypedData, string>;
-          return signTypedData(walletClient, {
-            primaryType,
-            domain,
-            message,
-            types,
-          });
-        },
-        signAuthorization: async (authorization) => {
-          return signAuthorization({
-            contractAddress: authorization.address as Address,
-            ...authorization,
-          });
-        },
-      });
+      if (!privyAccount || !sepoliaPublicClient || !sepoliaPaymasterClient) return null;
 
       const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
-        signer: privySigner,
+        signer: privyAccount,
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,
       });
 
       const kernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
-        signer: privySigner,
+        signer: privyAccount,
         entryPoint,
         kernelVersion,
       });
@@ -278,53 +175,20 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
 
       return { kernelAccountClient, kernelAccount, ecdsaValidator };
     },
-    enabled: !!sepoliaPublicClient && !!walletClient && !!sepoliaPaymasterClient,
+    enabled: !!sepoliaPublicClient && !!privyAccount && !!sepoliaPaymasterClient,
   });
 
   // intent client
   const { data: intentClient, mutateAsync: createIntentClientMutation } = useMutation({
-    mutationKey: [PROVIDER, "intentClient", !!sepoliaPublicClient, !!walletClient, !!sepoliaPaymasterClient],
+    mutationKey: [PROVIDER, "intentClient", !!sepoliaPublicClient, !!privyAccount, !!sepoliaPaymasterClient],
     mutationFn: async () => {
       if (!baseSepoliaPublicClient) throw new Error("No public client found");
       if (!sepoliaPublicClient) throw new Error("No public client found");
-      if (!walletClient) throw new Error("No wallet client found");
+      if (!privyAccount) throw new Error("No wallet client found");
       if (!sepoliaPaymasterClient) throw new Error("No paymaster client found");
 
-      // const multichainEcdsaValidator = await toMultiChainECDSAValidator(sepoliaPublicClient, {
-      //   signer: walletClient,
-      //   kernelVersion,
-      //   entryPoint,
-      //   multiChainIds: [SEPOLIA.id, baseSepolia.id],
-      // });
-      const privySigner = toAccount({
-        address: walletClient.account.address as Hex,
-        signMessage: async ({ message }) => {
-          return signMessage(walletClient, {
-            message,
-          });
-        },
-        signTransaction: async () => {
-          throw new Error("Smart account signer doesn't need to sign transactions");
-        },
-        signTypedData: async (typedData) => {
-          const { primaryType, domain, message, types } = typedData as TypedDataDefinition<TypedData, string>;
-          return signTypedData(walletClient, {
-            primaryType,
-            domain,
-            message,
-            types,
-          });
-        },
-        signAuthorization: async (authorization) => {
-          return signAuthorization({
-            contractAddress: authorization.address as Address,
-            ...authorization,
-          });
-        },
-      });
-
       const sepoliaKernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
-        signer: privySigner,
+        signer: privyAccount,
         kernelVersion,
         entryPoint,
       });
@@ -344,7 +208,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
 
       // create a kernel account with intent executor plugin
       const baseSepoliaKernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
-        signer: privySigner,
+        signer: privyAccount,
         kernelVersion,
         entryPoint,
       });
@@ -365,24 +229,6 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       const baseSepoliaAuthorization = await signAuthorization({
         contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
         chainId: baseSepolia.id,
-      });
-
-      // the cabclient can be used to send normal userOp and cross-chain cab tx
-      const sepoliaIntentClient = createIntentClient({
-        account: sepoliaKernelAccount,
-        chain: SEPOLIA,
-        bundlerTransport: http(sepoliaBundlerRpc),
-        version: INTENT_V0_4,
-        paymaster: sepoliaPaymasterClient,
-      });
-
-      // create sepolia and base sepolia intent clients
-      const baseSepoliaIntentClient = createIntentClient({
-        account: baseSepoliaKernelAccount,
-        chain: baseSepolia,
-        bundlerTransport: http(`https://rpc.zerodev.app/api/v3/${PROJECT_ID}/chain/${baseSepolia.id}`),
-        version: INTENT_V0_4,
-        paymaster: baseSepoliaPaymasterClient,
       });
 
       toast.info("Installing intent executor plugins...");
@@ -424,51 +270,14 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("installBaseSepoliaIntentPlugin", installBaseSepoliaIntentPlugin);
 
       console.log("Installing validator plugins...");
-      const sepoliaValidationConfig = await sepoliaPublicClient.readContract({
-        address: privySigner.address,
-        abi: [
-          {
-            type: "function",
-            name: "validationConfig",
-            inputs: [
-              {
-                name: "vId",
-                type: "bytes21",
-                internalType: "ValidationId",
-              },
-            ],
-            outputs: [
-              {
-                name: "",
-                type: "tuple",
-                internalType: "struct ValidationManager.ValidationConfig",
-                components: [
-                  {
-                    name: "nonce",
-                    type: "uint32",
-                    internalType: "uint32",
-                  },
-                  {
-                    name: "hook",
-                    type: "address",
-                    internalType: "contract IHook",
-                  },
-                ],
-              },
-            ],
-            stateMutability: "view",
-          },
-        ],
-        functionName: "validationConfig",
-        args: [concat(["0x01", MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS])],
-      });
+      const sepoliaValidationConfig = await checkInstallation(sepoliaPublicClient, privyAccount.address);
       console.log("sepoliaValidationConfig", sepoliaValidationConfig);
       if (sepoliaValidationConfig.hook !== zeroAddress) {
         console.log("Validator already installed on sepolia");
       } else {
         const installSepoliaValidatorPlugin = await installValidator(sepoliaKernelAccountClient, {
           validator: MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS,
-          validatorData: privySigner.address,
+          validatorData: privyAccount.address,
           account: sepoliaKernelAccount,
         })
           .then((tx) => {
@@ -484,51 +293,14 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("installSepoliaValidatorPlugin", installSepoliaValidatorPlugin);
       }
 
-      const baseSepoliaValidationConfig = await baseSepoliaPublicClient.readContract({
-        address: privySigner.address,
-        abi: [
-          {
-            type: "function",
-            name: "validationConfig",
-            inputs: [
-              {
-                name: "vId",
-                type: "bytes21",
-                internalType: "ValidationId",
-              },
-            ],
-            outputs: [
-              {
-                name: "",
-                type: "tuple",
-                internalType: "struct ValidationManager.ValidationConfig",
-                components: [
-                  {
-                    name: "nonce",
-                    type: "uint32",
-                    internalType: "uint32",
-                  },
-                  {
-                    name: "hook",
-                    type: "address",
-                    internalType: "contract IHook",
-                  },
-                ],
-              },
-            ],
-            stateMutability: "view",
-          },
-        ],
-        functionName: "validationConfig",
-        args: [concat(["0x01", MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS])],
-      });
+      const baseSepoliaValidationConfig = await checkInstallation(baseSepoliaPublicClient, privyAccount.address);
       console.log("baseSepoliaValidationConfig", baseSepoliaValidationConfig);
       if (baseSepoliaValidationConfig.hook !== zeroAddress) {
         console.log("Validator already installed on baseSepolia");
       } else {
         const installBaseSepoliaValidatorPlugin = await installValidator(baseSepoliaKernelAccountClient, {
           validator: MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS,
-          validatorData: privySigner.address,
+          validatorData: privyAccount.address,
           account: baseSepoliaKernelAccount,
         })
           .then((tx) => {
@@ -544,7 +316,16 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("installBaseSepoliaValidatorPlugin", installBaseSepoliaValidatorPlugin);
       }
 
-      return baseSepoliaIntentClient;
+      // the cabclient can be used to send normal userOp and cross-chain cab tx
+      const sepoliaIntentClient = createIntentClient({
+        account: sepoliaKernelAccount,
+        chain: SEPOLIA,
+        bundlerTransport: http(sepoliaBundlerRpc),
+        version: INTENT_V0_4,
+        paymaster: sepoliaPaymasterClient,
+      });
+
+      return sepoliaIntentClient;
     },
   });
 
