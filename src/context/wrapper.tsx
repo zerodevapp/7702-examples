@@ -4,14 +4,12 @@ import { ZeroDevSmartWalletConnectors } from "@dynamic-labs/ethereum-aa";
 import { DynamicContextProvider } from "@dynamic-labs/sdk-react-core";
 import { DynamicWagmiConnector } from "@dynamic-labs/wagmi-connector";
 import { PrivyProvider } from "@privy-io/react-auth";
-import React, { createContext, useContext, useMemo } from "react";
-import { useLocalStorage } from "usehooks-ts";
+import React, { createContext, useContext, useMemo, useState } from "react";
 import { baseSepolia, sepolia } from "viem/chains";
 import { createConfig, http, WagmiProvider } from "wagmi";
 import DynamicAccountProvider from "./account-providers/dynamic-account-provider";
 import PrivyAccountProvider from "./account-providers/privy-account-provider";
 import { AccountProviders } from "./account-providers/provider-context";
-
 export const AccountProviderContext = createContext<{
   accountProvider: AccountProviders;
   setAccountProvider: (accountProvider: AccountProviders) => void;
@@ -28,8 +26,16 @@ const wagmiConfig = createConfig({
   },
 });
 
-const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => {
-  const [accountProvider, setAccountProvider] = useLocalStorage<AccountProviders>("accountProvider", "privy");
+const AccountProviderWrapper = ({
+  children,
+  initialProvider,
+}: {
+  children: React.ReactNode;
+  initialProvider: string;
+}) => {
+  const [accountProvider, setAccountProvider] = useState<AccountProviders>(
+    (initialProvider as AccountProviders) ?? "privy",
+  );
 
   const EmbeddedOrInjectedProvider = useMemo(() => {
     if (accountProvider === "privy") {
@@ -75,7 +81,7 @@ const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => 
   if (!EmbeddedOrInjectedProvider) {
     return (
       <div className="flex h-screen w-screen items-center justify-center">
-        <div className="text-2xl font-bold">Invalid account provider selected</div>
+        <div className="text-2xl font-bold">Invalid account provider selected `{initialProvider}`</div>
       </div>
     );
   }
