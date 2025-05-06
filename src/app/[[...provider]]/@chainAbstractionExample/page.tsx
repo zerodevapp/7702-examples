@@ -2,6 +2,7 @@
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { CopyButton } from "@/components/ui/copy-button";
 import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { EXPLORER_URL, SEPOLIA_USDC_ADDRESS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
@@ -174,11 +175,18 @@ const ChainAbstractionExample = () => {
               href={"https://faucet.circle.com/"}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-primary my-4 text-sm"
+              className="text-primary text-sm"
             >
               USDC Faucet
             </Link>
           </Button>
+
+          <CopyButton
+            className="h-9 w-fit"
+            displayText="Copy Address"
+            copyValue={embeddedWallet?.address ?? ""}
+            onCopy={() => toast.success("Copied Address to clipboard")}
+          />
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="h-9 text-sm font-medium">2. Swap USDC (Base) to ZDEV (Sepolia)</Badge>

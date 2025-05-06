@@ -179,6 +179,7 @@ export default function Home() {
                   {embeddedWallet?.address}
                 </a>
                 <CopyButton
+                  className="ml-2"
                   copyValue={embeddedWallet.address}
                   onCopy={() => toast.success("Copied Address to clipboard")}
                 />

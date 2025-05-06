@@ -1,10 +1,10 @@
 "use client";
 import { ReactScan } from "@/components/react-scan";
 // import type { Metadata } from "next";
-import batchingExampleCode from "@/app/@batchingExample/code";
-import gasSponsorshipExampleCode from "@/app/@gasSponsorshipExample/code";
-import permissionsExampleCode from "@/app/@permissionsExample/code";
-import chainAbstractionExampleCode from "@/app/@chainAbstractionExample/code";
+import batchingExampleCode from "./@batchingExample/code";
+import gasSponsorshipExampleCode from "./@gasSponsorshipExample/code";
+import permissionsExampleCode from "./@permissionsExample/code";
+import chainAbstractionExampleCode from "./@chainAbstractionExample/code";
 import ExampleBlock from "@/components/example/example-block";
 import Footer from "@/components/footer";
 import Navigation from "@/components/navigation";
@@ -12,7 +12,9 @@ import { ReactQueryProvider } from "@/context/react-query";
 import AccountProviderWrapper from "@/context/wrapper";
 import { Fira_Code, Monomaniac_One, Noto_Sans } from "next/font/google";
 import { Toaster } from "sonner";
-import "./globals.css";
+import "@/app/globals.css";
+import { useParams } from "next/navigation";
+import { AccountProviders } from "@/context/account-providers/provider-context";
 // import { ThemeProvider } from "@/components/theme-provider";
 
 const firaCode = Fira_Code({
@@ -51,6 +53,9 @@ export default function RootLayout({
   permissionsExample: React.ReactNode;
   chainAbstractionExample: React.ReactNode;
 }>) {
+  const { provider } = useParams();
+  console.log(provider);
+
   return (
     <html
       lang="en"
@@ -59,7 +64,7 @@ export default function RootLayout({
       <ReactScan />
       <body className={`${firaCode.variable} ${monomaniacOne.variable} ${notoSans.variable} antialiased`}>
         <ReactQueryProvider>
-          <AccountProviderWrapper>
+          <AccountProviderWrapper initialProvider={provider?.[0] as AccountProviders}>
             <Navigation />
             <div className="border-primary container mx-auto max-w-5xl space-y-12 overflow-hidden border-x-2 py-6">
               <main className="space-y-12">
