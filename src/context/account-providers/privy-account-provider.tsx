@@ -31,12 +31,14 @@ import { createZeroDevPaymasterClient, AccountNotFoundError } from "@zerodev/sdk
 import React, { useEffect, useMemo, useState } from "react";
 import { createWalletClient, custom, Hex, http, zeroAddress, Address, encodeFunctionData, parseAbi, concat, encodeAbiParameters, parseAbiParameters } from "viem";
 import { getAction } from "viem/utils";
-import { parseAccount } from "viem/accounts";
-import type { Chain, Client, Hash, Prettify, Transport, SignedAuthorization } from "viem"
+import { parseAccount,  toAccount } from "viem/accounts";
+import type { Chain, Client, Hash, Prettify, Transport, SignedAuthorization, TypedDataDefinition, TypedData } from "viem"
 import {
   type SmartAccount,
   sendUserOperation
 } from "viem/account-abstraction"
+
+import { signMessage, signTypedData } from "viem/actions";
 
 import { usePublicClient } from "wagmi";
 import {
@@ -68,6 +70,9 @@ export async function installExecutor<
     args: Prettify<InstallExecutorParameters>
 ): Promise<Hash> {
   const { executor, account : account_ = client.account, authorization } = args
+  console.log("==============DEBUG===================");
+  console.log("=authorization");
+  console.log(authorization);
   if (!account_)
       throw new AccountNotFoundError()
   const account = parseAccount(account_) as SmartAccount
@@ -175,26 +180,62 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     ],
     queryFn: async () => {
       if (!walletClient || !sepoliaPublicClient || !sepoliaPaymasterClient) return null;
+      const privySigner = toAccount({
+        address: walletClient.account.address as Hex,
+        signMessage: async ({ message }) => {
+          return signMessage(walletClient, {
+            message,
+          });
+        },
+        signTransaction: async () => {
+          throw new Error("Smart account signer doesn't need to sign transactions");
+        },
+        signTypedData: async (typedData) => {
+          const { primaryType, domain, message, types } =
+            typedData as TypedDataDefinition<TypedData, string>;
+          return signTypedData(walletClient, {
+            primaryType,
+            domain,
+            message,
+            types,
+          });
+        },
+        signAuthorization: async (authorization) => {
+          return signAuthorization({
+            contractAddress: authorization.address as Address,
+            ...authorization,
+          });
+        },
+      });
+
 
       const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
-        signer: walletClient,
+        signer: privySigner,
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,
       });
         const kernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
-            signer: walletClient,
+            signer: privySigner,
             entryPoint,
             kernelVersion
         })
-        const kernelClient = create7702KernelAccountClient({
+        // const kernelClient = create7702KernelAccountClient({
+        //   account: kernelAccount,
+        //   chain: SEPOLIA,
+        //   bundlerTransport: http(sepoliaBundlerRpc),
+        //   paymaster: sepoliaPaymasterClient,
+        //   client: sepoliaPublicClient,
+        // })
+        const kernelAccountClient = create7702KernelAccountClient({
           account: kernelAccount,
           chain: SEPOLIA,
           bundlerTransport: http(sepoliaBundlerRpc),
           paymaster: sepoliaPaymasterClient,
           client: sepoliaPublicClient,
-        })
+        });
+  
 
-      return { kernelClient, kernelAccount, ecdsaValidator };
+      return { kernelAccountClient, kernelAccount, ecdsaValidator};
     },
     enabled: !!sepoliaPublicClient && !!walletClient && !!sepoliaPaymasterClient,
   });
@@ -236,15 +277,42 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       if (!walletClient) throw new Error("No wallet client found");
       if (!sepoliaPaymasterClient) throw new Error("No paymaster client found");
       
-      const multichainEcdsaValidator = await toMultiChainECDSAValidator(sepoliaPublicClient, {
-        signer: walletClient,
-        kernelVersion,
-        entryPoint,
-        multiChainIds: [SEPOLIA.id, baseSepolia.id],
+      // const multichainEcdsaValidator = await toMultiChainECDSAValidator(sepoliaPublicClient, {
+      //   signer: walletClient,
+      //   kernelVersion,
+      //   entryPoint,
+      //   multiChainIds: [SEPOLIA.id, baseSepolia.id],
+      // });
+      const privySigner = toAccount({
+        address: walletClient.account.address as Hex,
+        signMessage: async ({ message }) => {
+          return signMessage(walletClient, {
+            message,
+          });
+        },
+        signTransaction: async () => {
+          throw new Error("Smart account signer doesn't need to sign transactions");
+        },
+        signTypedData: async (typedData) => {
+          const { primaryType, domain, message, types } =
+            typedData as TypedDataDefinition<TypedData, string>;
+          return signTypedData(walletClient, {
+            primaryType,
+            domain,
+            message,
+            types,
+          });
+        },
+        signAuthorization: async (authorization) => {
+          return signAuthorization({
+            contractAddress: authorization.address as Address,
+            ...authorization,
+          });
+        },
       });
 
       const sepoliaKernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
-        signer: walletClient,
+        signer: privySigner,
         kernelVersion,
         entryPoint,
       });
@@ -265,7 +333,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
 
       // create a kernel account with intent executor plugin
       const baseSepoliaKernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
-        signer: walletClient,
+        signer: privySigner,
         kernelVersion,
         entryPoint,
       });
@@ -309,7 +377,8 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       toast.info("Installing intent executor plugins...");
       const installSepoliaIntentPlugin = await installExecutor(sepoliaKernelAccountClient, {
         executor: IntentVersionToAddressesMap[INTENT_V0_4].intentExecutorAddress,
-        account: sepoliaKernelAccount
+        account: sepoliaKernelAccount,
+        authorization: sepoliaAuthorization
       })
         .then((tx) => {
           console.log("installed intent executor plugin on sepolia");
@@ -323,7 +392,8 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         });
       const installBaseSepoliaIntentPlugin = await installExecutor(baseSepoliaKernelAccountClient, {
         executor: IntentVersionToAddressesMap[INTENT_V0_4].intentExecutorAddress,
-        account: baseSepoliaKernelAccount
+        account: baseSepoliaKernelAccount,
+        authorization: baseSepoliaAuthorization
       }).then((tx) => {
           console.log("installed intent executor plugin on baseSepolia");
           toast.success("Installed intent executor plugin on Base Sepolia");
