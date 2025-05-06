@@ -21,49 +21,45 @@ import {
 } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
-  signerToEcdsaValidator,
   create7702KernelAccount,
   create7702KernelAccountClient,
+  signerToEcdsaValidator,
 } from "@zerodev/ecdsa-validator";
-import {
-  createIntentClient,
-  getIntentExecutorPluginData,
-  installIntentExecutor,
-  INTENT_V0_4,
-  IntentVersionToAddressesMap,
-} from "@zerodev/intent";
-import { MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS, toMultiChainECDSAValidator } from "@zerodev/multi-chain-ecdsa-validator";
-import { createZeroDevPaymasterClient, AccountNotFoundError } from "@zerodev/sdk";
+import { createIntentClient, INTENT_V0_4, IntentVersionToAddressesMap } from "@zerodev/intent";
+import { MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS } from "@zerodev/multi-chain-ecdsa-validator";
+import { AccountNotFoundError, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo, useState } from "react";
-import {
-  createWalletClient,
-  custom,
-  Hex,
-  http,
-  zeroAddress,
-  Address,
-  encodeFunctionData,
-  parseAbi,
-  concat,
-  encodeAbiParameters,
-  parseAbiParameters,
-} from "viem";
-import { getAction } from "viem/utils";
-import { parseAccount, toAccount } from "viem/accounts";
 import type {
   Chain,
   Client,
   Hash,
   Prettify,
-  Transport,
   SignedAuthorization,
-  TypedDataDefinition,
+  Transport,
   TypedData,
+  TypedDataDefinition,
+} from "viem";
+import {
+  Address,
+  concat,
+  createWalletClient,
+  custom,
+  encodeAbiParameters,
+  encodeFunctionData,
+  Hex,
+  http,
+  parseAbi,
+  parseAbiParameters,
+  zeroAddress,
 } from "viem";
 import { type SmartAccount, sendUserOperation } from "viem/account-abstraction";
+import { parseAccount, toAccount } from "viem/accounts";
+import { getAction } from "viem/utils";
 
 import { signMessage, signTypedData } from "viem/actions";
 
+import { toast } from "sonner";
+import { baseSepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 import {
   AccountProviderContext,
@@ -71,8 +67,6 @@ import {
   SendTransactionParameters,
   SendUserOperationParameters,
 } from "./provider-context";
-import { baseSepolia } from "viem/chains";
-import { toast } from "sonner";
 /**
  * Constants for the Privy account provider
  */
