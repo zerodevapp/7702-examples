@@ -5,8 +5,8 @@ const batchingExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
     type: "files",
     files: [
       {
-        name: "index.js",
-        language: "javascript",
+        name: "index.ts",
+        language: "typescript",
         content: `kernelClient.sendUserOperation({
     account: account,
     calls: [

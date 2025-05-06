@@ -153,16 +153,6 @@ const ChainAbstractionExample = () => {
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
       <h4 className="text-lg font-medium">Chain Abstraction</h4>
 
-      {/* Request USDC from Circle Faucet on Base */}
-      <Link
-        href={"https://faucet.circle.com/"}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="text-primary my-4 text-sm underline underline-offset-4"
-      >
-        Request Circle USDC on Base Testnet
-      </Link>
-
       {!intentClient ? (
         <Button
           className="my-4"
@@ -174,7 +164,24 @@ const ChainAbstractionExample = () => {
 
       <div className="flex w-full flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">1. Swap USDC (Base) to ZDEV (Sepolia)</Badge>
+          <Badge className="h-9 text-sm font-medium">1. Get USDC on Sepolia</Badge>
+
+          <Button
+            asChild
+            className="h-9"
+          >
+            <Link
+              href={"https://faucet.circle.com/"}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary my-4 text-sm"
+            >
+              USDC Faucet
+            </Link>
+          </Button>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <Badge className="h-9 text-sm font-medium">2. Swap USDC (Base) to ZDEV (Sepolia)</Badge>
           <Input
             className="bg-background"
             type="text"

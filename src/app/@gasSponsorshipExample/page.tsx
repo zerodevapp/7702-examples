@@ -10,6 +10,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, parseUnits } from "viem";
 import { sepolia } from "viem/chains";
+import { Loader } from "lucide-react";
 
 const GasSponsorshipExample = () => {
   const { embeddedWallet, kernelAccount, kernelAccountClient, provider } = useAccountProviderContext();
@@ -124,6 +125,8 @@ const GasSponsorshipExample = () => {
             onClick={() => sendSponsoredTransaction()}
           >
             {isPending ? "Sending..." : "Send Sponsored Transaction"}
+
+            {isPending && <Loader className="text-primary ml-2 h-4 w-4 animate-spin" />}
           </Button>
 
           {/* Tx link */}

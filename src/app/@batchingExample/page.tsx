@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, formatUnits, parseUnits } from "viem";
 import { sepolia } from "viem/chains";
@@ -97,6 +97,12 @@ const BatchingExample = () => {
     },
     enabled: !!userOpHash,
   });
+
+  useEffect(() => {
+    if (kernelAccountClient?.account?.address) {
+      setToAddress(kernelAccountClient?.account?.address);
+    }
+  }, [kernelAccountClient?.account?.address]);
 
   return (
     <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">

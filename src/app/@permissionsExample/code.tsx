@@ -5,26 +5,8 @@ const batchingExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
     type: "files",
     files: [
       {
-        name: "index.js",
-        language: "javascript",
-        content: `sessionKernelClient?.sendTransaction({
-  calls: [
-    {
-      to: ZERODEV_TOKEN_ADDRESS,
-      value: BigInt(0),
-      data: encodeFunctionData({
-        abi: ZERODEV_TOKEN_ABI,
-        functionName: "transfer",
-        args: [toAddress, amount],
-      }),
-    },
-  ],
-})
-`,
-      },
-      {
-        name: "createSessionKey.js",
-        language: "javascript",
+        name: "createSessionKey.ts",
+        language: "typescript",
         content: `const createSessionKey = async () => {
   const _sessionPrivateKey = generatePrivateKey();
 
@@ -90,6 +72,24 @@ const batchingExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
 
   return {kernelClient, sessionKeyKernelAccount, serialisedSessionKey, sessionAccountAddress};
 };`,
+      },
+      {
+        name: "index.ts",
+        language: "typescript",
+        content: `sessionKernelClient?.sendTransaction({
+  calls: [
+    {
+      to: ZERODEV_TOKEN_ADDRESS,
+      value: BigInt(0),
+      data: encodeFunctionData({
+        abi: ZERODEV_TOKEN_ABI,
+        functionName: "transfer",
+        args: [toAddress, amount],
+      }),
+    },
+  ],
+})
+`,
       },
     ],
   },

@@ -41,7 +41,7 @@ const AccountProviderWrapper = ({ children }: { children: React.ReactNode }) => 
             config={{
               // Create embedded wallets for users who don't have a wallet
               embeddedWallets: {
-                showWalletUIs: true,
+                showWalletUIs: false,
                 createOnLogin: "all-users",
               },
             }}
