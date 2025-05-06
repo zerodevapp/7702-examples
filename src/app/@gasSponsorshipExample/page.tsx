@@ -83,7 +83,7 @@ const GasSponsorshipExample = () => {
 
       <div
         className="flex w-full flex-col gap-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
-        aria-disabled={!embeddedWallet}
+        aria-disabled={!embeddedWallet || !kernelAccount}
       >
         <div className="flex items-center gap-2">
           <Badge className="h-9 text-sm font-medium">Mint ZDEV Token</Badge>
