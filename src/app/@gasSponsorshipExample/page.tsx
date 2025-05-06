@@ -4,11 +4,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
-import { EXPLORER_URL, SEPOLIA, ZERODEV_TOKEN_ADDRESS, ZERODEV_DECIMALS } from "@/lib/constants";
+import { EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, parseUnits } from "viem";
+import { sepolia } from "viem/chains";
 
 const GasSponsorshipExample = () => {
   const { embeddedWallet, kernelAccount, kernelAccountClient } = useAccountProviderContext();
@@ -42,30 +43,8 @@ const GasSponsorshipExample = () => {
           functionName: "mint",
           args: [kernelAccount.address, parseUnits(amount, ZERODEV_DECIMALS)],
         }),
-        chain: SEPOLIA,
+        chain: sepolia,
       });
-      // return sendTransactionMutation({
-      //   transaction: {
-      //     account: kernelAccount,
-      //     to: ZERODEV_TOKEN_ADDRESS,
-      //     value: BigInt(0),
-      //     data: encodeFunctionData({
-      //       abi: [
-      //         {
-      //           name: "mint",
-      //           type: "function",
-      //           inputs: [
-      //             { name: "to", type: "address" },
-      //             { name: "amount", type: "uint256" },
-      //           ],
-      //         },
-      //       ],
-      //       functionName: "mint",
-      //       args: [embeddedWallet?.address, parseUnits(amount, ZERODEV_DECIMALS)],
-      //     }),
-      //     chain: CHAIN,
-      //   },
-      // });
     },
     onSuccess: (data) => {
       console.log(data);

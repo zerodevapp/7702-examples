@@ -1,17 +1,18 @@
+import { entryPoint, kernelVersion } from "@/lib/constants";
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
+import { KernelAccountClient } from "@zerodev/sdk";
 import React from "react";
+import { sepolia } from "viem/chains";
+import { usePublicClient } from "wagmi";
 import {
   AccountProviderContext,
   EmbeddedWallet,
   SendTransactionParameters,
   SendUserOperationParameters,
 } from "./provider-context";
-import { KernelAccountClient } from "@zerodev/sdk";
-import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
-import { SEPOLIA, entryPoint, kernelVersion } from "@/lib/constants";
-import { usePublicClient } from "wagmi";
 
 const PROVIDER = "dynamic";
 
@@ -19,7 +20,7 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
   const { primaryWallet, user } = useDynamicContext();
 
   const publicClient = usePublicClient({
-    chainId: SEPOLIA.id,
+    chainId: sepolia.id,
   });
 
   const { data: kernelAccountClient } = useQuery({

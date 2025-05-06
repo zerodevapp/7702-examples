@@ -7,7 +7,6 @@ import {
   kernelAddresses,
   kernelVersion,
   PROJECT_ID,
-  SEPOLIA,
   sepoliaBundlerRpc,
   sepoliaPaymasterRpc,
 } from "@/lib/constants";
@@ -36,7 +35,7 @@ import type { TypedData, TypedDataDefinition } from "viem";
 import { Address, createWalletClient, custom, Hex, http, zeroAddress } from "viem";
 import { toAccount } from "viem/accounts";
 import { signMessage, signTypedData } from "viem/actions";
-import { baseSepolia } from "viem/chains";
+import { baseSepolia, sepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 import {
   AccountProviderContext,
@@ -83,7 +82,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       }
       const walletClient = createWalletClient({
         account: privyEmbeddedWallet.address as Hex,
-        chain: SEPOLIA,
+        chain: sepolia,
         transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
       });
       return toAccount({
@@ -121,7 +120,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
    * The configured public client or null if wallet client is not available
    */
   const sepoliaPublicClient = usePublicClient({
-    chainId: SEPOLIA.id,
+    chainId: sepolia.id,
   });
   const baseSepoliaPublicClient = usePublicClient({
     chainId: baseSepolia.id,
@@ -133,7 +132,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   const sepoliaPaymasterClient = useMemo(() => {
     if (!sepoliaPublicClient) return null;
     return createZeroDevPaymasterClient({
-      chain: SEPOLIA,
+      chain: sepolia,
       transport: http(sepoliaPaymasterRpc),
     });
   }, [sepoliaPublicClient]);
@@ -167,7 +166,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
 
       const kernelAccountClient = create7702KernelAccountClient({
         account: kernelAccount,
-        chain: SEPOLIA,
+        chain: sepolia,
         bundlerTransport: http(sepoliaBundlerRpc),
         paymaster: sepoliaPaymasterClient,
         client: sepoliaPublicClient,
@@ -195,7 +194,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
 
       const sepoliaKernelAccountClient = create7702KernelAccountClient({
         account: sepoliaKernelAccount,
-        chain: SEPOLIA,
+        chain: sepolia,
         bundlerTransport: http(sepoliaBundlerRpc),
         paymaster: sepoliaPaymasterClient,
         client: sepoliaPublicClient,
@@ -224,7 +223,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       // sign authorization
       const sepoliaAuthorization = await signAuthorization({
         contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
-        chainId: SEPOLIA.id,
+        chainId: sepolia.id,
       });
       const baseSepoliaAuthorization = await signAuthorization({
         contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
@@ -319,7 +318,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       // the cabclient can be used to send normal userOp and cross-chain cab tx
       const sepoliaIntentClient = createIntentClient({
         account: sepoliaKernelAccount,
-        chain: SEPOLIA,
+        chain: sepolia,
         bundlerTransport: http(sepoliaBundlerRpc),
         version: INTENT_V0_4,
         paymaster: sepoliaPaymasterClient,

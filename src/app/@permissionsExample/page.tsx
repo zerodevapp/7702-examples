@@ -8,7 +8,6 @@ import {
   entryPoint,
   EXPLORER_URL,
   kernelVersion,
-  SEPOLIA,
   sepoliaBundlerRpc,
   sepoliaPaymasterRpc,
   ZERODEV_DECIMALS,
@@ -29,6 +28,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, http, parseUnits, zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { sepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 
 const PermissionsExample = () => {
@@ -44,7 +44,7 @@ const PermissionsExample = () => {
   } = useAccountProviderContext();
 
   const publicClient = usePublicClient({
-    chainId: SEPOLIA.id,
+    chainId: sepolia.id,
   });
 
   const createSessionKey = async () => {
@@ -111,12 +111,12 @@ const PermissionsExample = () => {
     // setSerialisedSessionKey(await serializePermissionAccount(sessionKeyKernelAccount, _sessionPrivateKey));
 
     const kernelPaymaster = createZeroDevPaymasterClient({
-      chain: SEPOLIA,
+      chain: sepolia,
       transport: http(sepoliaPaymasterRpc),
     });
     const kernelClient = createKernelAccountClient({
       account: sessionKeyKernelAccount,
-      chain: SEPOLIA,
+      chain: sepolia,
       bundlerTransport: http(sepoliaBundlerRpc),
       paymaster: {
         getPaymasterData(userOperation) {

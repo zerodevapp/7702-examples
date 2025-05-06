@@ -3,7 +3,6 @@ import { KERNEL_V3_3 } from "@zerodev/sdk/constants";
 import { KernelVersionToAddressesMap } from "@zerodev/sdk/constants";
 
 import { getEntryPoint } from "@zerodev/sdk/constants";
-import { sepolia } from "viem/chains";
 
 export const PROJECT_ID = process.env.NEXT_PUBLIC_PROJECT_ID;
 export const kernelVersion = KERNEL_V3_3;
@@ -11,7 +10,6 @@ export const kernelAddresses = KernelVersionToAddressesMap[kernelVersion];
 export const sepoliaBundlerRpc = `https://rpc.zerodev.app/api/v3/${PROJECT_ID}/chain/11155111`;
 export const sepoliaPaymasterRpc = `https://rpc.zerodev.app/api/v3/${PROJECT_ID}/chain/11155111`;
 export const entryPoint = getEntryPoint("0.7");
-export const SEPOLIA = sepolia;
 export const EXPLORER_URL = `https://sepolia.etherscan.io`;
 
 export const ZERODEV_TOKEN_ADDRESS = "0xfe4e9A244DC5Aa212a2e166B670Ebccea112B099";
