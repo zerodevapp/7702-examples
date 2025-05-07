@@ -1,5 +1,5 @@
 import CodeBlocks from "../example/code-blocks";
-import { localSetupCode } from "./code";
+import { localSetupCode } from "./local-setup-code";
 const LocalSetup = () => {
   return (
     <div className="flex flex-col gap-4 overflow-hidden">

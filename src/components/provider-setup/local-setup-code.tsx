@@ -7,15 +7,15 @@ export const localSetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDe
     packageManagers: [
       {
         type: "npm",
-        command: "npm i @tanstack/react-query wagmi viem",
+        command: "npm i @tanstack/react-query wagmi viem @zerodev/ecdsa-validator @zerodev/sdk",
       },
       {
         type: "yarn",
-        command: "yarn add @tanstack/react-query wagmi viem",
+        command: "yarn add @tanstack/react-query wagmi viem @zerodev/ecdsa-validator @zerodev/sdk",
       },
       {
         type: "pnpm",
-        command: "pnpm add @tanstack/react-query wagmi viem",
+        command: "pnpm add @tanstack/react-query wagmi viem @zerodev/ecdsa-validator @zerodev/sdk",
       },
     ],
   },
