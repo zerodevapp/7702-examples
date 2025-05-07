@@ -32,57 +32,30 @@ const kernelAddresses = KernelVersionToAddressesMap[kernelVersion];
 const privyEmbeddedWallet = useMemo(() => {
     return wallets.find((wallet) => wallet.walletClientType === "privy");
 }, [wallets]);
-const walletClient = useQuery({
-    queryKey: ['privy', "walletClient", privyEmbeddedWallet?.address],
-    queryFn: async () => {
-      if (!privyEmbeddedWallet) {
-        return null;
-      }
-    return createWalletClient({
-      account: privyEmbeddedWallet.address as Hex,
-      chain: baseSepolia,
-      });
-    },
-    enabled: !!privyEmbeddedWallet,
+const walletClient = createWalletClient({
+  account: privyEmbeddedWallet.address as Hex,
+  chain: baseSepolia,
+  });
+}
+
+const authorization = await signAuthorization({
+  contractAddress: kernelAddresses.accountImplementationAddress,
+  chainId: sepolia.id,
 });
-const { data: kernelClients } = useQuery({
-    queryKey: [
-        'privy',
-        "kernelClients",
-        walletClient?.account.address,
-        baseSepoliaPaymasterClient?.name,
-        baseSepoliaPublicClient?.name,
-    ],
-    queryFn: async () => {
-        if (!walletClient || !baseSepoliaPublicClient || !baseSepoliaPaymasterClient) return null;
-        const ecdsaValidator = await signerToEcdsaValidator(baseSepoliaPublicClient, {
-            signer: walletClient,
-            entryPoint: getEntryPoint("0.7"),
-            kernelVersion: KERNEL_V3_3,
-        });
-        const authorization = await signAuthorization({
-            contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
-            chainId: baseSepolia.id,
-        });
-        const kernelAccount = await createKernelAccount(baseSepoliaPublicClient, {
-            plugins: {
-                sudo: ecdsaValidator,
-            },
-            entryPoint: getEntryPoint("0.7"),
-            kernelVersion: KERNEL_V3_3,
-            address: walletClient.account.address,
-            eip7702Auth: authorization,
-        });
-        const kernelAccountClient = createKernelAccountClient({
-            account: kernelAccount,
-            chain: baseSepolia,
-            bundlerTransport: http(baseSepoliaBundlerRpc),
-            paymaster: baseSepoliaPaymasterClient,
-            client: baseSepoliaPublicClient,
-        });
-        return { kernelAccountClient, kernelAccount, ecdsaValidator };
-    },
-    enabled: !!baseSepoliaPublicClient && !!walletClient && !!baseSepoliaPaymasterClient,
+
+const kernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
+  signer: privyAccount,
+  entryPoint,
+  kernelVersion,
+  eip7702Auth: authorization,
+});
+
+const kernelAccountClient = create7702KernelAccountClient({
+  account: kernelAccount,
+  chain: baseSepolia,
+  bundlerTransport: http(baseSepoliaBundlerRpc),
+  paymaster: baseSepoliaPaymasterClient,
+  client: baseSepoliaPublicClient,
 });
 `,
       },
