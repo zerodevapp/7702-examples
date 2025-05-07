@@ -54,7 +54,6 @@ export default function RootLayout({
   chainAbstractionExample: React.ReactNode;
 }>) {
   const { provider } = useParams();
-  console.log(provider);
 
   return (
     <html

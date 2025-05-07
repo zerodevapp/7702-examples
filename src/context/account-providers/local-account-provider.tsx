@@ -8,7 +8,6 @@ import {
 } from "@/lib/constants";
 import { checkInstallation } from "@/lib/intent/checkInstallation";
 import { installExecutor, installValidator } from "@/lib/intent/install";
-import { useCreateWallet, useLogin, usePrivy, useSignAuthorization, useWallets } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   create7702KernelAccount,
@@ -18,84 +17,46 @@ import {
 import { createIntentClient, INTENT_V0_4, IntentVersionToAddressesMap } from "@zerodev/intent";
 import { MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS } from "@zerodev/multi-chain-ecdsa-validator";
 import { createZeroDevPaymasterClient } from "@zerodev/sdk";
-import React, { useEffect, useMemo } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import type { TypedData, TypedDataDefinition } from "viem";
-import { Address, createWalletClient, custom, Hex, http, zeroAddress } from "viem";
-import { toAccount } from "viem/accounts";
-import { signMessage, signTypedData } from "viem/actions";
+import { useLocalStorage } from "usehooks-ts";
+import { http, PrivateKeyAccount, zeroAddress } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { baseSepolia, sepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 import { AccountProviderContext, EmbeddedWallet } from "./provider-context";
-/**
- * Constants for the Privy account provider
- */
-const PROVIDER = "privy";
 
-/**
- * PrivyAccountProvider is a React component that manages authentication and wallet functionality
- * using Privy's authentication system. It handles wallet creation, kernel account setup,
- * and provides authentication UI components.
- *
- * @param {Object} props - Component props
- * @param {React.ReactNode} props.children - Child components to be wrapped
- * @returns {JSX.Element} The provider component with authentication functionality
- */
-const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
-  const { wallets } = useWallets();
-  const { user } = usePrivy();
-  const { createWallet } = useCreateWallet();
-  const { signAuthorization } = useSignAuthorization();
+const PROVIDER = "local";
 
-  const { login } = useLogin();
+const LocalAccountProvider = ({ children }: { children: React.ReactNode }) => {
+  const [localPrivateKey, setLocalPrivateKey] = useLocalStorage("local-account-private-key", "");
+  const [account, setAccount] = useState<PrivateKeyAccount | null>(null);
 
-  const privyEmbeddedWallet = useMemo(() => {
-    return wallets.find((wallet) => wallet.walletClientType === "privy");
-  }, [wallets]);
+  const createAccount = useCallback(async () => {
+    const newPrivateKey = generatePrivateKey();
+    const newAccount = privateKeyToAccount(newPrivateKey as `0x${string}`);
+    setLocalPrivateKey(newPrivateKey);
+    setAccount(newAccount);
+  }, [setLocalPrivateKey]);
 
-  /**
-   * Creates a wallet client using the embedded wallet's ethereum provider
-   * The configured wallet client or null if not available
-   */
-  const { data: privyAccount } = useQuery({
-    queryKey: [PROVIDER, "walletClient", privyEmbeddedWallet?.address],
+  useEffect(() => {
+    if (localPrivateKey) {
+      setAccount(privateKeyToAccount(localPrivateKey as `0x${string}`));
+    }
+  }, [localPrivateKey, setLocalPrivateKey, createAccount]);
+
+  const { data: embeddedWallet } = useQuery<EmbeddedWallet | null>({
+    queryKey: [PROVIDER, "embeddedWallet", account?.address],
     queryFn: async () => {
-      if (!privyEmbeddedWallet) {
-        return null;
-      }
-      const walletClient = createWalletClient({
-        account: privyEmbeddedWallet.address as Hex,
-        chain: sepolia,
-        transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
-      });
-      return toAccount({
-        address: privyEmbeddedWallet.address as Hex,
-        signMessage: async ({ message }) => {
-          return signMessage(walletClient, {
-            message,
-          });
-        },
-        signTransaction: async () => {
-          throw new Error("Smart account signer doesn't need to sign transactions");
-        },
-        signTypedData: async (typedData) => {
-          const { primaryType, domain, message, types } = typedData as TypedDataDefinition<TypedData, string>;
-          return signTypedData(walletClient, {
-            primaryType,
-            domain,
-            message,
-            types,
-          });
-        },
-        signAuthorization: async (authorization) => {
-          return signAuthorization({
-            contractAddress: authorization.address as Address,
-            ...authorization,
-          });
-        },
-      });
+      if (!account) return null;
+
+      return {
+        provider: "local",
+        address: account.address as `0x${string}`,
+        user: account.address,
+      };
     },
-    enabled: !!privyEmbeddedWallet,
+    enabled: !!account,
   });
 
   /**
@@ -120,29 +81,14 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     });
   }, [sepoliaPublicClient]);
 
-  /**
-   * Creates an ECDSA validator for the kernel account
-   * The configured validator or null if prerequisites are not met
-   */
   const { data: kernelClients } = useQuery({
-    queryKey: [
-      PROVIDER,
-      "kernelClient",
-      privyAccount?.address,
-      sepoliaPaymasterClient?.name,
-      sepoliaPublicClient?.name,
-    ],
+    queryKey: [PROVIDER, "kernelClient", account?.address, sepoliaPaymasterClient?.name, sepoliaPublicClient?.name],
     queryFn: async () => {
-      if (!privyAccount || !sepoliaPublicClient || !sepoliaPaymasterClient) return null;
-
-      const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
-        signer: privyAccount,
-        entryPoint: entryPoint,
-        kernelVersion: kernelVersion,
-      });
+      if (!sepoliaPublicClient || !sepoliaPaymasterClient) return null;
+      if (!account) return null;
 
       const kernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
-        signer: privyAccount,
+        signer: account,
         entryPoint,
         kernelVersion,
       });
@@ -155,22 +101,45 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         client: sepoliaPublicClient,
       });
 
+      const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
+        signer: account,
+        entryPoint,
+        kernelVersion,
+      });
+
       return { kernelAccountClient, kernelAccount, ecdsaValidator };
     },
-    enabled: !!sepoliaPublicClient && !!privyAccount && !!sepoliaPaymasterClient,
+    enabled: !!sepoliaPublicClient && !!account && !!sepoliaPaymasterClient,
   });
 
-  // intent client
+  /**
+   * Handles the sign-in process by opening the Privy sign-in modal
+   */
+  const signIn = async () => {
+    // setOpenPrivySignInModal(true);
+    createAccount();
+  };
+
+  const { data: isDeployed } = useQuery({
+    queryKey: [PROVIDER, "isDeployed", kernelClients?.kernelAccount.address],
+    queryFn: async () => {
+      if (!kernelClients) return false;
+      return kernelClients.kernelAccount.isDeployed();
+    },
+    enabled: !!kernelClients?.kernelAccount,
+    refetchInterval: ({ state }) => (state.data ? false : 2000),
+  });
+
   const { data: intentClient, mutateAsync: createIntentClientMutation } = useMutation({
-    mutationKey: [PROVIDER, "intentClient", !!sepoliaPublicClient, !!privyAccount, !!sepoliaPaymasterClient],
+    mutationKey: [PROVIDER, "intentClient", !!sepoliaPublicClient, !!account, !!sepoliaPaymasterClient],
     mutationFn: async () => {
       if (!baseSepoliaPublicClient) throw new Error("No public client found");
       if (!sepoliaPublicClient) throw new Error("No public client found");
-      if (!privyAccount) throw new Error("No wallet client found");
+      if (!account) throw new Error("No wallet client found");
       if (!sepoliaPaymasterClient) throw new Error("No paymaster client found");
 
       const sepoliaKernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
-        signer: privyAccount,
+        signer: account,
         kernelVersion,
         entryPoint,
       });
@@ -190,7 +159,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
 
       // create a kernel account with intent executor plugin
       const baseSepoliaKernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
-        signer: privyAccount,
+        signer: account,
         kernelVersion,
         entryPoint,
       });
@@ -204,13 +173,15 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       });
 
       // sign authorization
-      const sepoliaAuthorization = await signAuthorization({
+      const sepoliaAuthorization = await account.signAuthorization({
         contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
         chainId: sepolia.id,
+        nonce: 0,
       });
-      const baseSepoliaAuthorization = await signAuthorization({
+      const baseSepoliaAuthorization = await account.signAuthorization({
         contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
         chainId: baseSepolia.id,
+        nonce: 0,
       });
 
       toast.info("Installing intent executor plugins...");
@@ -252,14 +223,14 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       console.log("installBaseSepoliaIntentPlugin", installBaseSepoliaIntentPlugin);
 
       console.log("Installing validator plugins...");
-      const sepoliaValidationConfig = await checkInstallation(sepoliaPublicClient, privyAccount.address);
+      const sepoliaValidationConfig = await checkInstallation(sepoliaPublicClient, account.address);
       console.log("sepoliaValidationConfig", sepoliaValidationConfig);
       if (sepoliaValidationConfig.hook !== zeroAddress) {
         console.log("Validator already installed on sepolia");
       } else {
         const installSepoliaValidatorPlugin = await installValidator(sepoliaKernelAccountClient, {
           validator: MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS,
-          validatorData: privyAccount.address,
+          validatorData: account.address,
           account: sepoliaKernelAccount,
         })
           .then((tx) => {
@@ -275,14 +246,14 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         console.log("installSepoliaValidatorPlugin", installSepoliaValidatorPlugin);
       }
 
-      const baseSepoliaValidationConfig = await checkInstallation(baseSepoliaPublicClient, privyAccount.address);
+      const baseSepoliaValidationConfig = await checkInstallation(baseSepoliaPublicClient, account.address);
       console.log("baseSepoliaValidationConfig", baseSepoliaValidationConfig);
       if (baseSepoliaValidationConfig.hook !== zeroAddress) {
         console.log("Validator already installed on baseSepolia");
       } else {
         const installBaseSepoliaValidatorPlugin = await installValidator(baseSepoliaKernelAccountClient, {
           validator: MULTI_CHAIN_ECDSA_VALIDATOR_ADDRESS,
-          validatorData: privyAccount.address,
+          validatorData: account.address,
           account: baseSepoliaKernelAccount,
         })
           .then((tx) => {
@@ -311,65 +282,13 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
     },
   });
 
-  /**
-   * Handles the sign-in process by opening the Privy sign-in modal
-   */
-  const signIn = async () => {
-    // setOpenPrivySignInModal(true);
-    login();
-  };
-
-  /**
-   * Mutation hook for creating a new embedded wallet
-   * The mutation object with createEmbeddedWallet function
-   */
-  const { mutate: createEmbeddedWallet } = useMutation({
-    mutationFn: async () => {
-      const newEmbeddedWallet = await createWallet();
-      return newEmbeddedWallet;
-    },
-  });
-
-  useEffect(() => {
-    if (user) {
-      if (!privyEmbeddedWallet) {
-        createEmbeddedWallet();
-      }
-    }
-  }, [user, privyEmbeddedWallet, createEmbeddedWallet]);
-
-  const { data: embeddedWallet } = useQuery<EmbeddedWallet | null>({
-    queryKey: [PROVIDER, "embeddedWallet", privyEmbeddedWallet?.address, user],
-    queryFn: async () => {
-      if (!user) return null;
-      if (!privyEmbeddedWallet) return null;
-
-      return {
-        provider: "privy",
-        address: privyEmbeddedWallet.address as `0x${string}`,
-        user: user.email?.address ?? user.id,
-      };
-    },
-    enabled: !!privyEmbeddedWallet && !!user,
-  });
-
-  const { data: isDeployed } = useQuery({
-    queryKey: [PROVIDER, "isDeployed", kernelClients?.kernelAccount.address],
-    queryFn: async () => {
-      if (!kernelClients) return false;
-      return kernelClients.kernelAccount.isDeployed();
-    },
-    enabled: !!kernelClients?.kernelAccount,
-    refetchInterval: ({ state }) => (state.data ? false : 2000),
-  });
-
   return (
     <AccountProviderContext.Provider
       value={{
-        provider: "privy",
-        login: signIn,
+        provider: "local",
         embeddedWallet,
         isDeployed: Boolean(isDeployed),
+        login: signIn,
         kernelAccountClient: kernelClients?.kernelAccountClient,
         kernelAccount: kernelClients?.kernelAccount,
         ecdsaValidator: kernelClients?.ecdsaValidator,
@@ -382,4 +301,4 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-export default PrivyAccountProvider;
+export default LocalAccountProvider;

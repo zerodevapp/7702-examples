@@ -8,6 +8,7 @@ import Heading from "@/components/ui/heading";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { useAccountWrapperContext } from "@/context/wrapper";
 import { EXPLORER_URL } from "@/lib/constants";
+import { capitalize } from "@/lib/utils";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { UserPill as PrivyUserPill, UserPill } from "@privy-io/react-auth/ui";
 import { Check } from "lucide-react";
@@ -98,17 +99,22 @@ export default function Home() {
           className="text-lg"
           variant="secondary"
         >
-          Select an Account Provider
+          {selectedProvider === "local" ? "Account Providers" : `Account Provider - ${capitalize(selectedProvider)}`}
         </Heading>
 
         <div className="space-y-4 px-6">
           <p className="">
-            Various strategies can be implemented to achieve account abstraction using 7702 like using embedded wallets
+            {/* Various strategies can be implemented to achieve account abstraction using 7702 like using embedded wallets
             or injected (browser) wallets. Embedded wallets like Privy, Dynamic, Turnkey let you use social logins along
-            with other perks.
+            with other perks. */}
+            With the ZeroDev SDK, you can use various account providers to create 7702 accounts. Embedded wallets like{" "}
+            {selectedProvider === "local" ? "Privy, Dynamic, Turnkey" : capitalize(selectedProvider)} let you use social
+            logins along with other perks.
+            <br />
+            Alternatively, you can also use a local wallet to create a 7702 account.
           </p>
 
-          <p className="">Select any one of the options to experience 7702 in action.</p>
+          {selectedProvider === "local" && <p>Explore the examples with different account providers.</p>}
 
           <div className="w-full">
             <div className="flex w-full gap-4">

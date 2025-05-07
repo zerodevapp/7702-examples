@@ -10,7 +10,8 @@ import { createConfig, http, WagmiProvider } from "wagmi";
 import DynamicAccountProvider from "./account-providers/dynamic-account-provider";
 import PrivyAccountProvider from "./account-providers/privy-account-provider";
 import { AccountProviders } from "./account-providers/provider-context";
-export const AccountProviderContext = createContext<{
+import LocalAccountProvider from "./account-providers/local-account-provider";
+export const AccountProviderWrapperContext = createContext<{
   accountProvider: AccountProviders;
   setAccountProvider: (accountProvider: AccountProviders) => void;
 }>({
@@ -34,7 +35,7 @@ const AccountProviderWrapper = ({
   initialProvider: string;
 }) => {
   const [accountProvider, setAccountProvider] = useState<AccountProviders>(
-    (initialProvider as AccountProviders) ?? "privy",
+    (initialProvider as AccountProviders) ?? "local",
   );
 
   const EmbeddedOrInjectedProvider = useMemo(() => {
@@ -76,6 +77,13 @@ const AccountProviderWrapper = ({
       );
       return DynamProviderWrapper;
     }
+
+    const LocalProviderWrapper = ({ children }: { children: React.ReactNode }) => (
+      <WagmiProvider config={wagmiConfig}>
+        <LocalAccountProvider>{children}</LocalAccountProvider>
+      </WagmiProvider>
+    );
+    return LocalProviderWrapper;
   }, [accountProvider]);
 
   if (!EmbeddedOrInjectedProvider) {
@@ -87,19 +95,19 @@ const AccountProviderWrapper = ({
   }
 
   return (
-    <AccountProviderContext.Provider
+    <AccountProviderWrapperContext.Provider
       value={{
         accountProvider,
         setAccountProvider,
       }}
     >
       <EmbeddedOrInjectedProvider>{children}</EmbeddedOrInjectedProvider>
-    </AccountProviderContext.Provider>
+    </AccountProviderWrapperContext.Provider>
   );
 };
 
 export const useAccountWrapperContext = () => {
-  return useContext(AccountProviderContext);
+  return useContext(AccountProviderWrapperContext);
 };
 
 export default AccountProviderWrapper;

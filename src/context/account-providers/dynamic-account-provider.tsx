@@ -1,18 +1,13 @@
 import { entryPoint, kernelVersion } from "@/lib/constants";
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import { KernelAccountClient } from "@zerodev/sdk";
 import React from "react";
 import { sepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
-import {
-  AccountProviderContext,
-  EmbeddedWallet,
-  SendTransactionParameters,
-  SendUserOperationParameters,
-} from "./provider-context";
+import { AccountProviderContext, EmbeddedWallet } from "./provider-context";
 
 const PROVIDER = "dynamic";
 
@@ -120,28 +115,10 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
     enabled: !!kernelAccountClient?.account,
   });
 
-  const { mutateAsync: sendUserOperation } = useMutation({
-    mutationKey: [PROVIDER, "sendUserOperation"],
-    mutationFn: async ({ userOperation }: { userOperation: SendUserOperationParameters }) => {
-      if (!kernelAccountClient) throw new Error("No kernel account client found");
-      return kernelAccountClient.sendUserOperation(userOperation);
-    },
-  });
-
-  const { mutateAsync: sendTransaction } = useMutation({
-    mutationKey: [PROVIDER, "sendTransaction"],
-    mutationFn: async ({ transaction }: { transaction: SendTransactionParameters }) => {
-      if (!kernelAccountClient) throw new Error("No kernel account client found");
-      return kernelAccountClient.sendTransaction(transaction);
-    },
-  });
-
   return (
     <AccountProviderContext.Provider
       value={{
         provider: "dynamic",
-        sendUserOperationMutation: sendUserOperation,
-        sendTransactionMutation: sendTransaction,
         login: () => Promise.resolve(),
         embeddedWallet,
         isDeployed: Boolean(isDeployed),
