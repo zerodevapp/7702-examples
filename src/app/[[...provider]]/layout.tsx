@@ -73,7 +73,7 @@ export default function RootLayout({
                   index={1}
                   title="Gas Sponsorship"
                   docs="https://docs.zerodev.app/sdk/core-api/sponsor-gas"
-                  github="https://github.com/privy-io/privy-gas-sponsorship"
+                  github="https://github.com/zerodevapp/7702-examples/blob/main/src/app/%5B%5B...provider%5D%5D/%40gasSponsorshipExample/page.tsx"
                   example={gasSponsorshipExample}
                   codeBlock={gasSponsorshipExampleCode}
                   key="gas-sponsorship"
@@ -93,7 +93,7 @@ export default function RootLayout({
                   index={2}
                   title="Batching"
                   docs="https://docs.zerodev.app/sdk/core-api/batch-transactions"
-                  github="https://github.com/privy-io/privy-batching"
+                  github="https://github.com/zerodevapp/7702-examples/blob/main/src/app/%5B%5B...provider%5D%5D/%40batchingExample/page.tsx"
                   example={batchingExample}
                   codeBlock={batchingExampleCode}
                   key="batching"
@@ -113,7 +113,7 @@ export default function RootLayout({
                   index={3}
                   title="Permissions"
                   docs="https://docs.zerodev.app/sdk/permissions/intro"
-                  github="https://github.com/privy-io/privy-permissions"
+                  github="https://github.com/zerodevapp/7702-examples/blob/main/src/app/%5B%5B...provider%5D%5D/%40permissionsExample/page.tsx"
                   example={permissionsExample}
                   codeBlock={permissionsExampleCode}
                   key="permissions"
