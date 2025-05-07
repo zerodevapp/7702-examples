@@ -271,7 +271,7 @@ const PermissionsExample = () => {
               rel="noopener noreferrer"
               className="text-primary text-sm underline underline-offset-4"
             >
-              Explorer
+              View Session Key Transaction
             </a>
           )}
         </div>
