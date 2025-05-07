@@ -72,7 +72,6 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
 
       // Pass your `smartAccountSigner` to the validator
       const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
-        // @ts-expect-error - type inconsistency
         signer: dynamicWalletClient,
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,
