@@ -4,7 +4,7 @@ import { ReactScan } from "@/components/react-scan";
 import batchingExampleCode from "./@batchingExample/code";
 import gasSponsorshipExampleCode from "./@gasSponsorshipExample/code";
 import permissionsExampleCode from "./@permissionsExample/code";
-import chainAbstractionExampleCode from "./@chainAbstractionExample/code";
+// import chainAbstractionExampleCode from "./@chainAbstractionExample/code";
 import ExampleBlock from "@/components/example/example-block";
 import Footer from "@/components/footer";
 import Navigation from "@/components/navigation";
@@ -45,7 +45,7 @@ export default function RootLayout({
   batchingExample,
   gasSponsorshipExample,
   permissionsExample,
-  chainAbstractionExample,
+  // chainAbstractionExample,
 }: Readonly<{
   children: React.ReactNode;
   batchingExample: React.ReactNode;
@@ -139,7 +139,7 @@ export default function RootLayout({
                     </>
                   }
                 />
-                <ExampleBlock
+                {/* <ExampleBlock
                   index={4}
                   title="Chain Abstraction"
                   docs="https://docs.zerodev.app/sdk/advanced/chain-abstraction"
@@ -156,7 +156,7 @@ export default function RootLayout({
                       Chain abstracted balances eliminate the need to track and maintain balances on multiple chains.
                     </p>
                   }
-                />
+                /> */}
               </main>
             </div>
             <Footer />
