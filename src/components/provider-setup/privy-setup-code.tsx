@@ -26,8 +26,14 @@ export const privySetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDe
       {
         name: "client.ts",
         language: "typescript",
-        content: `const kernelVersion = KERNEL_V3_3;
+        content: `import { usePrivy, useSignAuthorization, useWallets } from "@privy-io/react-auth";
+
+const kernelVersion = KERNEL_V3_3;
 const kernelAddresses = KernelVersionToAddressesMap[kernelVersion];
+
+const { wallets } = useWallets();
+const { user } = usePrivy();
+
 // get wallet client from privy
 const privyEmbeddedWallet = useMemo(() => {
     return wallets.find((wallet) => wallet.walletClientType === "privy");
