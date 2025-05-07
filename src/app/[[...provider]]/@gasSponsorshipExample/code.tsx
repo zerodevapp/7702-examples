@@ -12,14 +12,15 @@ const gasSponsorshipExampleCode: Array<CodeBlockProps & { stepTitle?: string }> 
   transport: http(baseSepoliaPaymasterRpc),
 });
 
-const kernelAccount = await createKernelAccount(...);
+const kernelAccount = await create7702KernelAccount(...);
 
-const kernelAccountClient = createKernelAccountClient({
-  paymaster: sepoliaPaymasterClient,
+const kernelAccountClient = create7702KernelAccountClient({
+  paymaster: baseSepoliaPaymasterClient,
+
   // ...
+  bundlerTransport: http(baseSepoliaBundlerRpc),
   account: kernelAccount,
   chain: baseSepolia,
-  bundlerTransport: http(baseSepoliaBundlerRpc),
   client: baseSepoliaPublicClient,
 });
 `,
