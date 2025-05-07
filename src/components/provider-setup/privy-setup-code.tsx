@@ -7,15 +7,15 @@ export const privySetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDe
     packageManagers: [
       {
         type: "npm",
-        command: "npm i @privy-io/react-auth @tanstack/react-query wagmi viem",
+        command: "npm i @privy-io/react-auth @tanstack/react-query wagmi viem @zerodev/ecdsa-validator @zerodev/sdk",
       },
       {
         type: "yarn",
-        command: "yarn add @privy-io/react-auth @tanstack/react-query wagmi viem",
+        command: "yarn add @privy-io/react-auth @tanstack/react-query wagmi viem @zerodev/ecdsa-validator @zerodev/sdk",
       },
       {
         type: "pnpm",
-        command: "pnpm add @privy-io/react-auth @tanstack/react-query wagmi viem",
+        command: "pnpm add @privy-io/react-auth @tanstack/react-query wagmi viem @zerodev/ecdsa-validator @zerodev/sdk",
       },
     ],
   },
