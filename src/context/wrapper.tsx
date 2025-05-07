@@ -13,6 +13,7 @@ import { AccountProviders } from "./account-providers/provider-context";
 import LocalAccountProvider from "./account-providers/local-account-provider";
 import { TurnkeyProvider } from "@turnkey/sdk-react";
 import TurnkeyAccountProvider from "./account-providers/turnkey-account-provider";
+
 export const AccountProviderWrapperContext = createContext<{
   accountProvider: AccountProviders;
   setAccountProvider: (accountProvider: AccountProviders) => void;
@@ -86,9 +87,8 @@ const AccountProviderWrapper = ({
           <TurnkeyProvider
             config={{
               // apiBaseUrl: "https://api.turnkey.com",
-              apiBaseUrl: "https://api.turnkey.com",
-              serverSignUrl: "https://api.turnkey.com",
-              defaultOrganizationId: process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID!,
+              apiBaseUrl: process.env.NEXT_PUBLIC_BASE_URL!,
+              defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
               iframeUrl: "https://auth.turnkey.com",
               rpId: process.env.NEXT_PUBLIC_RP_ID, // Your application's domain for WebAuthn flows
             }}

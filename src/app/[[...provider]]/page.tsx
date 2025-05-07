@@ -44,7 +44,7 @@ export default function Home() {
             <div>
               <p className="">
                 This guide assumes that you are building a dapp with embedded wallets powered by{" "}
-                {capitalizeProvider(selectedProvider)}.  If you are using another embedded wallet, check{" "}
+                {capitalizeProvider(selectedProvider)}. If you are using another embedded wallet, check{" "}
                 <Link
                   className="text-primary underline underline-offset-4"
                   href="/"
@@ -54,9 +54,7 @@ export default function Home() {
                 .
               </p>
               <br />
-              <p className="">
-                In this guide, we will walk you through:
-              </p>
+              <p className="">In this guide, we will walk you through:</p>
             </div>
           )}
           <ul className="list-disc pl-8">
@@ -106,12 +104,8 @@ export default function Home() {
                     Privy
                   </Link>
                 </li>
-                <li>
-                  Dynamic
-                </li>
-                <li>
-                  Turnkey
-                </li>
+                <li>Dynamic</li>
+                <li>Turnkey</li>
               </ul>
             </>
           )}
@@ -168,12 +162,12 @@ export default function Home() {
                   authConfig={{
                     emailEnabled: true,
                     // Set the rest to false to disable them
-                    passkeyEnabled: false,
-                    phoneEnabled: false,
-                    appleEnabled: false,
-                    facebookEnabled: false,
-                    googleEnabled: false,
-                    walletEnabled: false,
+                    passkeyEnabled: true,
+                    phoneEnabled: true,
+                    appleEnabled: true,
+                    facebookEnabled: true,
+                    googleEnabled: true,
+                    walletEnabled: true,
                   }}
                   onAuthSuccess={async () => {
                     console.log("Auth success");
@@ -182,7 +176,7 @@ export default function Home() {
                     console.error(error);
                   }}
                   // The order of the auth methods to display in the UI
-                  configOrder={["email"]}
+                  configOrder={["email", "passkey", "phone", "apple", "facebook", "google", "wallet"]}
                 />
               ) : null}
               {selectedProvider === "local" && !embeddedWallet && (

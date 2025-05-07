@@ -13,6 +13,7 @@ export const sepoliaPaymasterRpc = `https://rpc.zerodev.app/api/v3/${PROJECT_ID}
 export const baseSepoliaBundlerRpc = `https://rpc.zerodev.app/api/v3/${PROJECT_ID}/chain/84532`;
 export const baseSepoliaPaymasterRpc = `https://rpc.zerodev.app/api/v3/${PROJECT_ID}/chain/84532`;
 export const entryPoint = getEntryPoint("0.7");
+export const TURNKEY_ORG_ID = process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID!;
 export const EXPLORER_URL = baseSepolia.blockExplorers.default.url;
 
 export const ZERODEV_TOKEN_ADDRESS = "0x65A49dF64216bE58F8851A553863658dB7Fe301F";
