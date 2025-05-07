@@ -30,7 +30,7 @@ const batchingExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
             value: zeroAddress,
           },
           {
-            condition: ParamCondition.LESS_THAN,
+            condition: ParamCondition.LESS_THAN_OR_EQUAL,
             value: parseUnits("10", ZERODEV_DECIMALS),
           },
         ],
