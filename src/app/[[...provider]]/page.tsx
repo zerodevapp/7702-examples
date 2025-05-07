@@ -159,7 +159,8 @@ export default function Home() {
                 <DynamicWidget />
               ) : selectedProvider === "privy" ? (
                 <PrivyUserPill />
-              ) : (
+              ) : null}
+              {selectedProvider === "local" && !embeddedWallet && (
                 <Button
                   variant="cta"
                   onClick={() => {

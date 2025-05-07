@@ -2,38 +2,38 @@ import Link from "next/link";
 
 const Footer = () => {
   return (
-    <footer className="bg-sidebar-primary text-sidebar-primary-foreground mt-12 w-full py-8">
-      <div className="container mx-auto flex flex-col justify-between px-4 md:flex-row md:items-center">
+    <footer className="bg-primary w-full py-8 text-white">
+      <div className="container mx-auto flex max-w-5xl flex-col justify-between px-6 md:flex-row md:items-center">
         <div className="mb-8 flex items-center gap-4 font-mono text-2xl md:mb-0">
           <span className="font-bold">7702</span>
           <span className="text-xl">x</span>
           <span className="font-bold">ZeroDev</span>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-16">
+        <div className="grid grid-cols-1 gap-x-16">
           <div className="flex flex-col space-y-2">
             <h3 className="mb-4 text-xl">Resources</h3>
             <Link
-              href="/docs"
+              href="https://docs.zerodev.app/sdk/getting-started/quickstart-7702"
               className="hover:underline"
             >
-              Docs
+              7702 Docs
             </Link>
             <Link
-              href="/dashboard"
+              href="https://dashboard.zerodev.app"
               className="hover:underline"
             >
               Dashboard
             </Link>
             <Link
-              href="/eip"
+              href="https://eips.ethereum.org/EIPS/eip-7702"
               className="hover:underline"
             >
               EIP
             </Link>
           </div>
 
-          <div className="flex flex-col space-y-2">
+          {/* <div className="flex flex-col space-y-2">
             <h3 className="mb-4 text-xl">Integrations</h3>
             <Link
               href="/privy"
@@ -53,7 +53,7 @@ const Footer = () => {
             >
               Dynamic
             </Link>
-          </div>
+          </div> */}
         </div>
       </div>
     </footer>
