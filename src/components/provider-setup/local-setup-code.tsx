@@ -73,10 +73,15 @@ const ecdsaValidator = await signerToEcdsaValidator(baseSepoliaPublicClient, {
     [baseSepolia.id]: http(),
   },
 });
+const queryClient = new QueryClient();
 
-<WagmiProvider config={wagmiConfig}>
-  <LocalAccountProvider>{children}</LocalAccountProvider>
-</WagmiProvider>`,
+// wrap your app in the following providers
+<QueryClientProvider client={queryClient}>
+  <WagmiProvider config={wagmiConfig}>
+    <LocalAccountProvider>{children}</LocalAccountProvider>
+  </WagmiProvider>
+</QueryClientProvider>
+`,
       },
     ],
   },

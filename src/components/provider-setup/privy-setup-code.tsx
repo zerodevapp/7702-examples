@@ -63,22 +63,27 @@ const kernelAccountClient = create7702KernelAccountClient({
         name: "context.ts",
         language: "react",
         content: `import { PrivyProvider } from "@privy-io/react-auth";
-// const wagmiConfig = ...;
-<WagmiProvider config={wagmiConfig}>
-    <PrivyProvider
-        appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
-        clientId={process.env.NEXT_PUBLIC_CLIENT_ID}
-        config={{
-            // Create embedded wallets for users who don't have a wallet
-            embeddedWallets: {
-                showWalletUIs: true,
-                createOnLogin: "all-users",
-            },
-        }}
-    >
-        {children}
-    </PrivyProvider>
-</WagmiProvider>`,
+const wagmiConfig = ...;
+const queryClient = new QueryClient();
+
+// wrap your app in the following providers
+<QueryClientProvider client={queryClient}>
+  <WagmiProvider config={wagmiConfig}>
+      <PrivyProvider
+          appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
+          clientId={process.env.NEXT_PUBLIC_CLIENT_ID}
+          config={{
+              // Create embedded wallets for users who don't have a wallet
+              embeddedWallets: {
+                  showWalletUIs: true,
+                  createOnLogin: "all-users",
+              },
+          }}
+      >
+          {children}
+      </PrivyProvider>
+  </WagmiProvider>
+</QueryClientProvider>`,
       },
     ],
   },
