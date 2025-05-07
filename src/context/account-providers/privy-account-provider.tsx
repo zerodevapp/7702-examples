@@ -56,7 +56,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       }
       const walletClient = createWalletClient({
         account: privyEmbeddedWallet.address as Hex,
-        chain: sepolia,
+        chain: baseSepolia,
         transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
       });
       return walletClient;
@@ -99,20 +99,20 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
       sepoliaPublicClient?.name,
     ],
     queryFn: async () => {
-      if (!privyAccount || !sepoliaPublicClient || !baseSepoliaPaymasterClient) return null;
+      if (!privyAccount || !baseSepoliaPublicClient || !baseSepoliaPaymasterClient) return null;
 
-      const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
+      const ecdsaValidator = await signerToEcdsaValidator(baseSepoliaPublicClient, {
         signer: privyAccount,
-        entryPoint: entryPoint,
-        kernelVersion: kernelVersion,
+        entryPoint,
+        kernelVersion,
       });
 
       const authorization = await signAuthorization({
         contractAddress: kernelAddresses.accountImplementationAddress,
-        chainId: sepolia.id,
+        chainId: baseSepolia.id,
       });
 
-      const kernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
+      const kernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
         signer: privyAccount,
         entryPoint,
         kernelVersion,
@@ -129,7 +129,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
 
       return { kernelAccountClient, kernelAccount, ecdsaValidator };
     },
-    enabled: !!sepoliaPublicClient && !!privyAccount && !!baseSepoliaPaymasterClient,
+    enabled: !!baseSepoliaPublicClient && !!privyAccount && !!baseSepoliaPaymasterClient,
   });
 
   // intent client

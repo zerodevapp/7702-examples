@@ -95,7 +95,7 @@ export default function Home() {
 
           {selectedProvider === "local" && (
             <>
-              <p>Check out the integration examples for embedded wallets:</p>
+              <p>For integration with specific embedded wallets, check out these guides:</p>
               <ul className="list-disc pl-8">
                 <li>
                   <Link
@@ -105,22 +105,12 @@ export default function Home() {
                     Privy
                   </Link>
                 </li>
-                {/* <li>
-                  <Link
-                    className="text-primary underline underline-offset-4"
-                    href="/dynamic"
-                  >
-                    Dynamic
-                  </Link>
+                <li>
+                  Dynamic
                 </li>
                 <li>
-                  <Link
-                    className="text-primary underline underline-offset-4"
-                    href="/turnkey"
-                  >
-                    Turnkey
-                  </Link>
-                </li> */}
+                  Turnkey
+                </li>
               </ul>
             </>
           )}
