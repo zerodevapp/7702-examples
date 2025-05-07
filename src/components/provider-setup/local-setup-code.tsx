@@ -2,7 +2,7 @@ import { CodeBlockProps } from "../ui/code";
 
 export const localSetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDescription?: string }> = [
   {
-    stepTitle: "Installing Dependencies",
+    stepTitle: "Install Dependencies",
     type: "command",
     packageManagers: [
       {
