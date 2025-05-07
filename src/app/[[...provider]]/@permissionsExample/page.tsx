@@ -30,7 +30,7 @@ import { encodeFunctionData, http, parseUnits, zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
-
+import { Loader } from "lucide-react";
 const PermissionsExample = () => {
   const [amount, setAmount] = useState<string>("");
   const [sessionAccountAddress, setSessionAccountAddress] = useState<`0x${string}` | null>(null);
@@ -256,10 +256,12 @@ const PermissionsExample = () => {
           </div>
 
           <Button
-            disabled={isPending}
+            disabled={isPending || isDisabled}
             onClick={() => sendTransactionWithAmount()}
           >
             {isPending ? "Sending..." : "Send Transaction"}
+
+            {isPending && <Loader className="text-primary ml-2 h-4 w-4 animate-spin" />}
           </Button>
 
           {txHash && (
