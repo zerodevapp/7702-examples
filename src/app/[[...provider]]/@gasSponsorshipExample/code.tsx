@@ -22,8 +22,8 @@ const gasSponsorshipExampleCode: Array<CodeBlockProps & { stepTitle?: string }> 
         name: "kernelClient.ts",
         language: "typescript",
         content: `const paymasterClient = createZeroDevPaymasterClient({
-  chain: sepolia,
-  transport: http(sepoliaPaymasterRpc),
+  chain: baseSepolia,
+  transport: http(baseSepoliaPaymasterRpc),
 });
 
 const kernelAccount = await createKernelAccount(...);
@@ -32,9 +32,9 @@ const kernelAccountClient = createKernelAccountClient({
   paymaster: sepoliaPaymasterClient,
   // ...
   account: kernelAccount,
-  chain: sepolia,
-  bundlerTransport: http(sepoliaBundlerRpc),
-  client: sepoliaPublicClient,
+  chain: baseSepolia,
+  bundlerTransport: http(baseSepoliaBundlerRpc),
+  client: baseSepoliaPublicClient,
 });
 `,
       },

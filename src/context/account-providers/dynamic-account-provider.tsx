@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import { KernelAccountClient } from "@zerodev/sdk";
 import React from "react";
-import { sepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 import { AccountProviderContext, EmbeddedWallet } from "./provider-context";
 
@@ -15,7 +15,7 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
   const { primaryWallet, user } = useDynamicContext();
 
   const publicClient = usePublicClient({
-    chainId: sepolia.id,
+    chainId: baseSepolia.id,
   });
 
   const { data: kernelAccountClient } = useQuery({

@@ -42,7 +42,7 @@ const walletClient = useQuery({
       }
     return createWalletClient({
       account: privyEmbeddedWallet.address as Hex,
-      chain: SEPOLIA,
+      chain: baseSepolia,
       });
     },
     enabled: !!privyEmbeddedWallet,
@@ -53,13 +53,13 @@ const { data: kernelClients } = useQuery({
         'privy',
         "kernelClients",
         walletClient?.account.address,
-        sepoliaPaymasterClient?.name,
-        sepoliaPublicClient?.name,
+        baseSepoliaPaymasterClient?.name,
+        baseSepoliaPublicClient?.name,
     ],
     queryFn: async () => {
-        if (!walletClient || !sepoliaPublicClient || !sepoliaPaymasterClient) return null;
+        if (!walletClient || !baseSepoliaPublicClient || !baseSepoliaPaymasterClient) return null;
 
-        const ecdsaValidator = await signerToEcdsaValidator(sepoliaPublicClient, {
+        const ecdsaValidator = await signerToEcdsaValidator(baseSepoliaPublicClient, {
             signer: walletClient,
             entryPoint: getEntryPoint("0.7"),
             kernelVersion: KERNEL_V3_3,
@@ -67,10 +67,10 @@ const { data: kernelClients } = useQuery({
 
         const authorization = await signAuthorization({
             contractAddress: kernelAddresses.accountImplementationAddress, // The address of the smart contract
-            chainId: SEPOLIA.id,
+            chainId: baseSepolia.id,
         });
 
-        const kernelAccount = await createKernelAccount(sepoliaPublicClient, {
+        const kernelAccount = await createKernelAccount(baseSepoliaPublicClient, {
             plugins: {
                 sudo: ecdsaValidator,
             },
@@ -82,15 +82,15 @@ const { data: kernelClients } = useQuery({
 
         const kernelAccountClient = createKernelAccountClient({
             account: kernelAccount,
-            chain: SEPOLIA,
-            bundlerTransport: http(sepoliaBundlerRpc),
-            paymaster: sepoliaPaymasterClient,
-            client: sepoliaPublicClient,
+            chain: baseSepolia,
+            bundlerTransport: http(baseSepoliaBundlerRpc),
+            paymaster: baseSepoliaPaymasterClient,
+            client: baseSepoliaPublicClient,
         });
 
         return { kernelAccountClient, kernelAccount, ecdsaValidator };
     },
-    enabled: !!sepoliaPublicClient && !!walletClient && !!sepoliaPaymasterClient,
+    enabled: !!baseSepoliaPublicClient && !!walletClient && !!baseSepoliaPaymasterClient,
 });
 `,
       },

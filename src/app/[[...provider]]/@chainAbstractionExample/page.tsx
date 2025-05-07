@@ -11,7 +11,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, erc20Abi, formatUnits, parseUnits } from "viem";
-import { baseSepolia, sepolia } from "viem/chains";
+import { sepolia, baseSepolia } from "viem/chains";
 import { useBalance } from "wagmi";
 const ChainAbstractionExample = () => {
   const { kernelAccountClient, intentClient, createIntentClient, kernelAccount, embeddedWallet, provider } =
@@ -26,7 +26,7 @@ const ChainAbstractionExample = () => {
       const cab = await intentClient.getCAB({
         // Specify any networks you want to aggregate.
         // If you skip this flag, it will aggregate from all the networks we support, but it may be slower.
-        networks: [sepolia.id, baseSepolia.id],
+        networks: [baseSepolia.id, sepolia.id],
 
         // Specify the tokens you want to aggregate balances for.
         // If you skip this flag, it will return all the tokens we support, but it may be slower.
@@ -45,7 +45,7 @@ const ChainAbstractionExample = () => {
   const { data: tokenBalance } = useBalance({
     address: embeddedWallet?.address,
     token: ZERODEV_TOKEN_ADDRESS,
-    chainId: sepolia.id,
+    chainId: baseSepolia.id,
     query: {
       refetchInterval: 5000,
     },
@@ -100,7 +100,7 @@ const ChainAbstractionExample = () => {
         // ],
         outputTokens: [
           {
-            chainId: sepolia.id,
+            chainId: baseSepolia.id,
             address: SEPOLIA_USDC_ADDRESS,
             amount: parseUnits(amount, 6),
           },

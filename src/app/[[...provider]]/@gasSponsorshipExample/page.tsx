@@ -9,7 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, parseUnits } from "viem";
-import { sepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { Loader } from "lucide-react";
 
 const GasSponsorshipExample = () => {
@@ -44,7 +44,7 @@ const GasSponsorshipExample = () => {
           functionName: "mint",
           args: [kernelAccount.address, parseUnits(amount, ZERODEV_DECIMALS)],
         }),
-        chain: sepolia,
+        chain: baseSepolia,
       });
     },
     onSuccess: (data) => {
