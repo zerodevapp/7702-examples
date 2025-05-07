@@ -12,8 +12,9 @@ import { ReactQueryProvider } from "@/context/react-query";
 import AccountProviderWrapper from "@/context/wrapper";
 import { useParams } from "next/navigation";
 import { Toaster } from "sonner";
+import "@turnkey/sdk-react/styles";
 
-export default function RootLayout({
+export default function Layout({
   children,
   batchingExample,
   gasSponsorshipExample,

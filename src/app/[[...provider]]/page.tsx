@@ -15,6 +15,7 @@ import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { UserPill as PrivyUserPill } from "@privy-io/react-auth/ui";
 import Link from "next/link";
 import { toast } from "sonner";
+import { Auth as TurnkeyAuth } from "@turnkey/sdk-react";
 
 export default function Home() {
   const { accountProvider: selectedProvider } = useAccountWrapperContext();
@@ -162,6 +163,27 @@ export default function Home() {
                 <DynamicWidget />
               ) : selectedProvider === "privy" ? (
                 <PrivyUserPill />
+              ) : selectedProvider === "turnkey" ? (
+                <TurnkeyAuth
+                  authConfig={{
+                    emailEnabled: true,
+                    // Set the rest to false to disable them
+                    passkeyEnabled: false,
+                    phoneEnabled: false,
+                    appleEnabled: false,
+                    facebookEnabled: false,
+                    googleEnabled: false,
+                    walletEnabled: false,
+                  }}
+                  onAuthSuccess={async () => {
+                    console.log("Auth success");
+                  }}
+                  onError={(error) => {
+                    console.error(error);
+                  }}
+                  // The order of the auth methods to display in the UI
+                  configOrder={["email"]}
+                />
               ) : null}
               {selectedProvider === "local" && !embeddedWallet && (
                 <Button
