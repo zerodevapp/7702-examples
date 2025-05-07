@@ -145,3 +145,17 @@
 .example {
   font-family: var(--font-example);
 }
+
+/* scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+  position: fixed;
+  top: 0;
+  right: 0;
+}
+
+::-webkit-scrollbar-thumb {
+  background: oklch(0.2875 0.169 280.23);
+  border-radius: 0;
+}

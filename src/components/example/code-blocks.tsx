@@ -9,12 +9,12 @@ const CodeBlocks = ({
   return codeBlocks.map((block, index) => (
     <div
       key={index}
-      className="flex-1 space-y-2 overflow-y-auto"
+      className="space-y-2"
     >
       {block.stepTitle && <h3 className="font-semibold">{block.stepTitle}</h3>}
       {block.stepDescription && <p>{block.stepDescription}</p>}
       <CodeBlock
-        className="h-full overflow-y-auto"
+        className="overflow-y-auto"
         {...block}
       />
     </div>

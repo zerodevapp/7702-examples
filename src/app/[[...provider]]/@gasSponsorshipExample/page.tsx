@@ -98,11 +98,11 @@ const GasSponsorshipExample = () => {
           ref={signInTooltipRef}
           className="border-primary bg-background fixed top-0 left-0 z-[99] max-w-xs border-2 p-4 text-sm opacity-0"
         >
-          Sign in with <span className="capitalize">{provider}</span> to try out the examples!
+          Create 7702 Account with <span className="capitalize">{provider}</span> to try out the examples!
         </div>
       )}
       <div
-        className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:select-none"
         ref={containerRef}
         aria-disabled={isDisabled}
       >
@@ -121,7 +121,7 @@ const GasSponsorshipExample = () => {
           </div>
 
           <Button
-            disabled={isPending}
+            disabled={isPending || isDisabled}
             onClick={() => sendSponsoredTransaction()}
           >
             {isPending ? "Sending..." : "Send Sponsored Transaction"}
