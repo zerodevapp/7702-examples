@@ -56,13 +56,13 @@ const batchingExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
   });
 
   const kernelPaymaster = createZeroDevPaymasterClient({
-    chain: SEPOLIA,
-    transport: http(sepoliaPaymasterRpc),
+    chain: baseSepolia,
+    transport: http(baseSepoliaPaymasterRpc),
   });
   const kernelClient = createKernelAccountClient({
     account: sessionKeyKernelAccount,
-    chain: sepolia,
-    bundlerTransport: http(sepoliaBundlerRpc),
+    chain: baseSepolia,
+    bundlerTransport: http(baseSepoliaBundlerRpc),
     paymaster: {
       getPaymasterData(userOperation) {
         return kernelPaymaster.sponsorUserOperation({ userOperation });

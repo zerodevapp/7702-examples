@@ -10,7 +10,7 @@ import { Loader } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, formatUnits, parseUnits } from "viem";
-import { sepolia } from "viem/chains";
+import { baseSepolia } from "viem/chains";
 import { useBalance } from "wagmi";
 
 const BatchingExample = () => {
@@ -25,7 +25,7 @@ const BatchingExample = () => {
     query: {
       refetchInterval: 5000,
     },
-    chainId: sepolia.id,
+    chainId: baseSepolia.id,
   });
 
   const {

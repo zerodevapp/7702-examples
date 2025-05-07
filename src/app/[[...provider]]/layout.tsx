@@ -4,7 +4,7 @@ import { ReactScan } from "@/components/react-scan";
 import batchingExampleCode from "./@batchingExample/code";
 import gasSponsorshipExampleCode from "./@gasSponsorshipExample/code";
 import permissionsExampleCode from "./@permissionsExample/code";
-import chainAbstractionExampleCode from "./@chainAbstractionExample/code";
+// import chainAbstractionExampleCode from "./@chainAbstractionExample/code";
 import ExampleBlock from "@/components/example/example-block";
 import Footer from "@/components/footer";
 import Navigation from "@/components/navigation";
@@ -45,7 +45,7 @@ export default function RootLayout({
   batchingExample,
   gasSponsorshipExample,
   permissionsExample,
-  chainAbstractionExample,
+  // chainAbstractionExample,
 }: Readonly<{
   children: React.ReactNode;
   batchingExample: React.ReactNode;
@@ -139,6 +139,24 @@ export default function RootLayout({
                     </>
                   }
                 />
+                {/* <ExampleBlock
+                  index={4}
+                  title="Chain Abstraction"
+                  docs="https://docs.zerodev.app/sdk/advanced/chain-abstraction"
+                  github="https://github.com/privy-io/privy-chain-abstraction"
+                  example={chainAbstractionExample}
+                  codeBlock={chainAbstractionExampleCode}
+                  key="chain-abstraction"
+                  description={
+                    <p className="px-6">
+                      Chain abstraction allows spending from multiple chains with a single user operation. This example
+                      demonstrates how to spend USDC from Base Sepolia and swap to ZDEV token on Sepolia.
+                      <br />
+                      <br />
+                      Chain abstracted balances eliminate the need to track and maintain balances on multiple chains.
+                    </p>
+                  }
+                /> */}
               </main>
             </div>
             <Footer />
