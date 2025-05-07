@@ -1,4 +1,10 @@
-import { baseSepoliaBundlerRpc, baseSepoliaPaymasterRpc, entryPoint, kernelVersion } from "@/lib/constants";
+import {
+  baseSepoliaBundlerRpc,
+  baseSepoliaPaymasterRpc,
+  entryPoint,
+  kernelAddresses,
+  kernelVersion,
+} from "@/lib/constants";
 import { useQuery } from "@tanstack/react-query";
 import {
   create7702KernelAccount,
@@ -79,10 +85,17 @@ const LocalAccountProvider = ({ children }: { children: React.ReactNode }) => {
       if (!baseSepoliaPublicClient || !baseSepoliaPaymasterClient) return null;
       if (!account) return null;
 
+      const authorization = await account.signAuthorization({
+        chainId: baseSepolia.id,
+        nonce: 0,
+        address: kernelAddresses.accountImplementationAddress,
+      });
+
       const kernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
         signer: account,
         entryPoint,
         kernelVersion,
+        eip7702Auth: authorization,
       });
 
       const kernelAccountClient = create7702KernelAccountClient({
