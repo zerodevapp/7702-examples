@@ -11,7 +11,7 @@ const CodeBlocks = ({
       key={index}
       className="space-y-2"
     >
-      {block.stepTitle && <h3 className="font-semibold">{block.stepTitle}</h3>}
+      {block.stepTitle && <h3 className="">{block.stepTitle}</h3>}
       {block.stepDescription && <p>{block.stepDescription}</p>}
       <CodeBlock
         className="overflow-y-auto"

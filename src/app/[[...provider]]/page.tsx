@@ -96,7 +96,7 @@ export default function Home() {
                 <li>
                   <Link
                     className="text-primary underline underline-offset-4"
-                    href="#gas-sponsorship"
+                    href="/dynamic"
                   >
                     Dynamic
                   </Link>
@@ -176,6 +176,9 @@ export default function Home() {
 
         {/* Left column: Code */}
         <div className="flex flex-col gap-4 px-6">
+          <h2 className="text-lg font-medium">
+            Setting up {selectedProvider === "local" ? "Local Account" : capitalizeProvider(selectedProvider)} with 7702
+          </h2>
           {selectedProvider === "local" && <LocalWalletSetup />}
           {selectedProvider === "privy" && <PrivySetup />}
           {selectedProvider === "dynamic" && <DynamicSetup />}
