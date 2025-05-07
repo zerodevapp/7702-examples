@@ -182,10 +182,13 @@ export default function Home() {
           <h2 className="text-lg font-medium">
             Setting up {selectedProvider === "local" ? "Local Account" : capitalizeProvider(selectedProvider)} with 7702
           </h2>
-          {selectedProvider === "local" && <LocalWalletSetup />}
-          {selectedProvider === "privy" && <PrivySetup />}
-          {selectedProvider === "dynamic" && <DynamicSetup />}
-          {selectedProvider === "turnkey" && <TurnkeySetup />}
+
+          <div className="overflow-y-auto">
+            {selectedProvider === "local" && <LocalWalletSetup />}
+            {selectedProvider === "privy" && <PrivySetup />}
+            {selectedProvider === "dynamic" && <DynamicSetup />}
+            {selectedProvider === "turnkey" && <TurnkeySetup />}
+          </div>
         </div>
 
         <div className="space-x-4 px-6">
@@ -195,11 +198,15 @@ export default function Home() {
           >
             <Link
               href={
-                selectedProvider === "local" ? "https://docs.zerodev.app/sdk/getting-started/quickstart-7702" :
-                  selectedProvider === "privy" ? "https://docs.privy.io/recipes/react/eip-7702" :
-                    selectedProvider === "dynamic" ? "https://docs.dynamic.xyz/smart-wallets/smart-wallet-providers/7702" :
-                      selectedProvider === "turnkey" ? "https://docs.turnkey.com/networks/ethereum#eip-7702-type-4-support" :
-                        "https://docs.zerodev.app/"
+                selectedProvider === "local"
+                  ? "https://docs.zerodev.app/sdk/getting-started/quickstart-7702"
+                  : selectedProvider === "privy"
+                    ? "https://docs.privy.io/recipes/react/eip-7702"
+                    : selectedProvider === "dynamic"
+                      ? "https://docs.dynamic.xyz/smart-wallets/smart-wallet-providers/7702"
+                      : selectedProvider === "turnkey"
+                        ? "https://docs.turnkey.com/networks/ethereum#eip-7702-type-4-support"
+                        : "https://docs.zerodev.app/"
               }
               target="_blank"
               rel="noopener noreferrer"
@@ -213,11 +220,15 @@ export default function Home() {
           >
             <Link
               href={
-                selectedProvider === "local" ? "https://github.com/zerodevapp/7702-examples/blob/main/src/context/account-providers/local-account-provider.tsx" :
-                  selectedProvider === "privy" ? "https://github.com/zerodevapp/7702-examples/blob/main/src/context/account-providers/privy-account-provider.tsx" :
-                    selectedProvider === "dynamic" ? "https://github.com/zerodevapp/7702-examples/blob/main/src/context/account-providers/dynamic-account-provider.tsx" :
-                      selectedProvider === "turnkey" ? "https://github.com/zerodevapp/7702-examples/blob/main/src/context/account-providers/turnkey-account-provider.tsx" :
-                        "https://github.com/zerodevapp/7702-examples"
+                selectedProvider === "local"
+                  ? "https://github.com/zerodevapp/7702-examples/blob/main/src/context/account-providers/local-account-provider.tsx"
+                  : selectedProvider === "privy"
+                    ? "https://github.com/zerodevapp/7702-examples/blob/main/src/context/account-providers/privy-account-provider.tsx"
+                    : selectedProvider === "dynamic"
+                      ? "https://github.com/zerodevapp/7702-examples/blob/main/src/context/account-providers/dynamic-account-provider.tsx"
+                      : selectedProvider === "turnkey"
+                        ? "https://github.com/zerodevapp/7702-examples/blob/main/src/context/account-providers/turnkey-account-provider.tsx"
+                        : "https://github.com/zerodevapp/7702-examples"
               }
               target="_blank"
               rel="noopener noreferrer"
