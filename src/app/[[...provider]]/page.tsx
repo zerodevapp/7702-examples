@@ -37,8 +37,7 @@ export default function Home() {
           </p>
           {selectedProvider === "local" ? (
             <p className="">
-              This guide will show you how to upgrade EOAs to smart accounts using the ZeroDev SDK and various account
-              providers like Privy, Dynamic, and Turnkey.
+              This guide will show you how to upgrade EOAs to smart accounts using the ZeroDev SDK and Viem.
             </p>
           ) : (
             <p className="">
