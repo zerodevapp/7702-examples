@@ -7,6 +7,7 @@ import Heading from "@/components/ui/heading";
 import { useAccountProviderContext } from "@/context/account-providers/provider-context";
 import { useAccountWrapperContext } from "@/context/wrapper";
 import { EXPLORER_URL } from "@/lib/constants";
+import { capitalize } from "@/lib/utils";
 import { DynamicWidget } from "@dynamic-labs/sdk-react-core";
 import { UserPill as PrivyUserPill, UserPill } from "@privy-io/react-auth/ui";
 import Link from "next/link";
@@ -27,10 +28,13 @@ export default function Home() {
         <Heading>Introduction</Heading>
         <div className="space-y-4 px-6">
           <p className="">
-            EIP-7702 is an Ethereum update that allows externally owned accounts (EOAs) to upgrade into smart accounts.  In practical terms, this means that EOA wallets can now enjoy the benefits of account abstraction, such as gas sponsorship, transaction batching, transaction automation, and even chain abstraction.
+            EIP-7702 is an Ethereum update that allows externally owned accounts (EOAs) to upgrade into smart accounts.
+            In practical terms, this means that EOA wallets can now enjoy the benefits of account abstraction, such as
+            gas sponsorship, transaction batching, transaction automation, and even chain abstraction.
           </p>
           <p className="">
-            This guide assumes that you are building a dapp with embedded wallets powered by {capitalizeProvider(selectedProvider)}.  We will walk you through:
+            This guide assumes that you are building a dapp with embedded wallets powered by{" "}
+            {capitalizeProvider(selectedProvider)}. We will walk you through:
           </p>
           <ul className="list-disc pl-8">
             <li>
@@ -74,19 +78,13 @@ export default function Home() {
           id="setup"
           className="@container flex flex-col gap-4"
         >
-          <Heading>
-            Upgrading EOAs to smart accounts
-          </Heading>
-
-          {/* Two-column layout like other examples */}
+          <Heading>Upgrading EOAs to smart accounts</Heading>
           <div className="example grid flex-1 grid-cols-1 gap-4 p-4 px-6 @3xl:grid-cols-2">
             {/* Left column: Code */}
-            <div className="flex flex-col gap-4 overflow-hidden">
-              {selectedProvider === "privy" && <PrivySetup />}
-            </div>
+            <div className="flex flex-col gap-4 overflow-hidden">{selectedProvider === "privy" && <PrivySetup />}</div>
 
             {/* Right column: Login button */}
-            <div className="overflow-hidden space-y-4">
+            <div className="space-y-4 overflow-hidden">
               {!embeddedWallet ? (
                 <div>
                   {selectedProvider === "dynamic" ? (
@@ -115,7 +113,6 @@ export default function Home() {
                       <Badge variant="secondary">Not Deployed</Badge>
                     )}
                   </div>
-
                   <p>User: {embeddedWallet?.user}</p>
                   <p>
                     Address:{" "}
@@ -141,6 +138,22 @@ export default function Home() {
                 </div>
               )}
             </div>
+          </div>
+          {selectedProvider === "local" ? "Account Providers" : `Account Provider - ${capitalize(selectedProvider)}`}
+
+          <div className="space-y-4 px-6">
+            <p className="">
+              {/* Various strategies can be implemented to achieve account abstraction using 7702 like using embedded wallets
+            or injected (browser) wallets. Embedded wallets like Privy, Dynamic, Turnkey let you use social logins along
+            with other perks. */}
+              With the ZeroDev SDK, you can use various account providers to create 7702 accounts. Embedded wallets like{" "}
+              {selectedProvider === "local" ? "Privy, Dynamic, Turnkey" : capitalize(selectedProvider)} let you use
+              social logins along with other perks.
+              <br />
+              Alternatively, you can also use a local wallet to create a 7702 account.
+            </p>
+
+            {selectedProvider === "local" && <p>Explore the examples with different account providers.</p>}
           </div>
 
           <div className="space-x-4 px-6">

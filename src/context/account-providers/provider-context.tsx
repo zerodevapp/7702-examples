@@ -21,12 +21,6 @@ export interface AccountProviderContextInterface {
   provider: AccountProviders;
   embeddedWallet: EmbeddedWallet | undefined | null;
   isDeployed: boolean;
-  sendUserOperationMutation: ({
-    userOperation,
-  }: {
-    userOperation: SendUserOperationParameters;
-  }) => Promise<`0x${string}`>;
-  sendTransactionMutation: ({ transaction }: { transaction: SendTransactionParameters }) => Promise<`0x${string}`>;
   login: () => Promise<void>;
   kernelAccountClient: KernelAccountClient | undefined | null;
   kernelAccount: CreateKernelAccountReturnType<"0.7"> | SmartAccount | undefined | null;
@@ -40,14 +34,6 @@ export const AccountProviderContext = createContext<AccountProviderContextInterf
     typeof window === "undefined" ? "privy" : (window?.localStorage?.getItem("accountProvider") as AccountProviders),
   embeddedWallet: undefined,
   isDeployed: false,
-  sendUserOperationMutation: async ({ userOperation }: { userOperation: SendUserOperationParameters }) => {
-    console.log(userOperation);
-    throw new Error("Not implemented");
-  },
-  sendTransactionMutation: async ({ transaction }: { transaction: SendTransactionParameters }) => {
-    console.log(transaction);
-    throw new Error("Not implemented");
-  },
   login: async () => {
     throw new Error("Not implemented");
   },
