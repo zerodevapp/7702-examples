@@ -22,6 +22,7 @@ const notoSans = Noto_Sans({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://7702.zerodev.app"),
   title: "7702 Examples - ZeroDev",
   description: "Explore practical examples of 7702 using ZeroDev and Embedded Wallets!",
   icons: {
