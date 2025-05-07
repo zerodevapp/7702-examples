@@ -24,7 +24,7 @@ import {
   createZeroDevPaymasterClient,
   KernelAccountClient,
 } from "@zerodev/sdk";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, http, parseUnits, zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
@@ -41,6 +41,9 @@ const PermissionsExample = () => {
     kernelAccount: masterKernelAccount,
     kernelAccountClient: masterKernelAccountClient,
     ecdsaValidator: masterEcdsaValidator,
+    embeddedWallet,
+    provider,
+    kernelAccount,
   } = useAccountProviderContext();
 
   const publicClient = usePublicClient({
@@ -168,10 +171,50 @@ const PermissionsExample = () => {
     },
   });
 
-  return (
-    <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
-      <h4 className="text-lg font-medium">Permissions</h4>
+  const containerRef = useRef<HTMLDivElement>(null);
+  const signInTooltipRef = useRef<HTMLDivElement>(null);
 
+  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccount, [embeddedWallet, kernelAccount]);
+
+  useEffect(() => {
+    const signInTooltip = signInTooltipRef.current;
+    const container = containerRef.current;
+    if (!isDisabled) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      signInTooltip?.style.setProperty("left", `${e.clientX + 10}px`);
+      signInTooltip?.style.setProperty("top", `${e.clientY + 10}px`);
+    };
+    const handleMouseEnter = () => {
+      signInTooltip?.style.setProperty("opacity", "1");
+    };
+    const handleMouseLeave = () => {
+      signInTooltip?.style.setProperty("opacity", "0");
+    };
+    if (signInTooltip && container) {
+      // follow mouse within the container
+      container.addEventListener("mousemove", handleMouseMove);
+      container.addEventListener("mouseenter", handleMouseEnter);
+      container.addEventListener("mouseleave", handleMouseLeave);
+    }
+    return () => {
+      signInTooltip?.removeEventListener("mousemove", handleMouseMove);
+      container?.removeEventListener("mouseenter", handleMouseEnter);
+      container?.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [isDisabled]);
+
+  return (
+    <>
+      {/* sign in tool tip */}
+      {isDisabled && (
+        <div
+          ref={signInTooltipRef}
+          className="border-primary bg-background fixed top-0 left-0 z-[99] max-w-xs border-2 p-4 text-sm opacity-0"
+        >
+          Create 7702 Account with <span className="capitalize">{provider}</span> to try out the examples!
+        </div>
+      )}
       <div className="flex w-full flex-col gap-4">
         <div className="flex flex-wrap items-center gap-2">
           <Badge className="h-9 text-sm font-medium">1. Create a session key</Badge>
@@ -221,7 +264,7 @@ const PermissionsExample = () => {
           </a>
         )}
       </div>
-    </div>
+    </>
   );
 };
 

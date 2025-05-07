@@ -17,7 +17,7 @@ const GasSponsorshipExample = () => {
   const [amount, setAmount] = useState("");
 
   const {
-    mutate: sendSponsoredTransaction,
+    mutate: sendTransaction,
     isPending,
     data: txHash,
   } = useMutation({
@@ -122,7 +122,7 @@ const GasSponsorshipExample = () => {
 
           <Button
             disabled={isPending || isDisabled}
-            onClick={() => sendSponsoredTransaction()}
+            onClick={() => sendTransaction()}
           >
             {isPending ? "Sending..." : "Send Sponsored Transaction"}
 

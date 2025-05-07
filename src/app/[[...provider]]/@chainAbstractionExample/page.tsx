@@ -8,16 +8,16 @@ import { useAccountProviderContext } from "@/context/account-providers/provider-
 import { EXPLORER_URL, SEPOLIA_USDC_ADDRESS, ZERODEV_TOKEN_ADDRESS } from "@/lib/constants";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { encodeFunctionData, erc20Abi, formatUnits, parseUnits } from "viem";
 import { baseSepolia, sepolia } from "viem/chains";
 import { useBalance } from "wagmi";
 const ChainAbstractionExample = () => {
-  const { kernelAccountClient, intentClient, createIntentClient } = useAccountProviderContext();
+  const { kernelAccountClient, intentClient, createIntentClient, kernelAccount, embeddedWallet, provider } =
+    useAccountProviderContext();
 
   const [amount, setAmount] = useState("");
-  const { embeddedWallet } = useAccountProviderContext();
 
   const { data: cab, refetch: refetchCAB } = useQuery({
     queryKey: ["usdc-balance", intentClient?.account?.address],
@@ -150,79 +150,125 @@ const ChainAbstractionExample = () => {
     enabled: Boolean(intentData && intentClient),
   });
 
+  const containerRef = useRef<HTMLDivElement>(null);
+  const signInTooltipRef = useRef<HTMLDivElement>(null);
+  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccount, [embeddedWallet, kernelAccount]);
+  useEffect(() => {
+    const signInTooltip = signInTooltipRef.current;
+    const container = containerRef.current;
+    if (!isDisabled) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      signInTooltip?.style.setProperty("left", `${e.clientX + 10}px`);
+      signInTooltip?.style.setProperty("top", `${e.clientY + 10}px`);
+    };
+    const handleMouseEnter = () => {
+      signInTooltip?.style.setProperty("opacity", "1");
+    };
+    const handleMouseLeave = () => {
+      signInTooltip?.style.setProperty("opacity", "0");
+    };
+    if (signInTooltip && container) {
+      // follow mouse within the container
+      container.addEventListener("mousemove", handleMouseMove);
+      container.addEventListener("mouseenter", handleMouseEnter);
+      container.addEventListener("mouseleave", handleMouseLeave);
+    }
+    return () => {
+      signInTooltip?.removeEventListener("mousemove", handleMouseMove);
+      container?.removeEventListener("mouseenter", handleMouseEnter);
+      container?.removeEventListener("mouseleave", handleMouseLeave);
+    };
+  }, [isDisabled]);
+
   return (
-    <div className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4">
-      <h4 className="text-lg font-medium">Chain Abstraction</h4>
-
-      {!intentClient ? (
-        <Button
-          className="my-4"
-          onClick={() => createIntentClient()}
+    <>
+      {/* sign in tool tip */}
+      {isDisabled && (
+        <div
+          ref={signInTooltipRef}
+          className="border-primary bg-background fixed top-0 left-0 z-[99] max-w-xs border-2 p-4 text-sm opacity-0"
         >
-          Initialise Intents Plugin
-        </Button>
-      ) : null}
+          Create 7702 Account with <span className="capitalize">{provider}</span> to try out the examples!
+        </div>
+      )}
+      <div
+        className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:select-none"
+        ref={containerRef}
+        aria-disabled={isDisabled}
+      >
+        <h4 className="text-lg font-medium">Chain Abstraction</h4>
 
-      <div className="flex w-full flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">1. Get USDC on Sepolia</Badge>
+        {!intentClient ? (
+          <Button
+            className="my-4"
+            onClick={() => createIntentClient()}
+          >
+            Initialise Intents Plugin
+          </Button>
+        ) : null}
+
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="h-9 text-sm font-medium">1. Get USDC on Sepolia</Badge>
+
+            <Button
+              asChild
+              className="h-9"
+            >
+              <Link
+                href={"https://faucet.circle.com/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary text-sm"
+              >
+                USDC Faucet
+              </Link>
+            </Button>
+
+            <CopyButton
+              className="h-9 w-fit"
+              displayText="Copy Address"
+              copyValue={embeddedWallet?.address ?? ""}
+              onCopy={() => toast.success("Copied Address to clipboard")}
+            />
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="h-9 text-sm font-medium">2. Swap USDC (Base) to ZDEV (Sepolia)</Badge>
+            <Input
+              className="bg-background"
+              type="text"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+          </div>
+
+          <p className="text-sm">USDC Chain Abstracted Balance: {formatUnits(cab ?? BigInt(0), 6)} </p>
+          <p className="text-sm">
+            ZDEV (Sepolia) Balance: {formatUnits(tokenBalance?.value ?? BigInt(0), tokenBalance?.decimals ?? 18)}{" "}
+          </p>
 
           <Button
-            asChild
-            className="h-9"
+            disabled={isPending}
+            onClick={() => sendTransaction()}
           >
-            <Link
-              href={"https://faucet.circle.com/"}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary text-sm"
-            >
-              USDC Faucet
-            </Link>
+            {isPending ? "Sending..." : "Send Chain Abstracted Transaction"}
           </Button>
 
-          <CopyButton
-            className="h-9 w-fit"
-            displayText="Copy Address"
-            copyValue={embeddedWallet?.address ?? ""}
-            onCopy={() => toast.success("Copied Address to clipboard")}
-          />
+          {intentData?.outputUiHash.uiHash && (
+            <a
+              href={`${EXPLORER_URL}/tx/${intentData.outputUiHash.uiHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary text-sm underline underline-offset-4"
+            >
+              View Transaction
+            </a>
+          )}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">2. Swap USDC (Base) to ZDEV (Sepolia)</Badge>
-          <Input
-            className="bg-background"
-            type="text"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-        </div>
-
-        <p className="text-sm">USDC Chain Abstracted Balance: {formatUnits(cab ?? BigInt(0), 6)} </p>
-        <p className="text-sm">
-          ZDEV (Sepolia) Balance: {formatUnits(tokenBalance?.value ?? BigInt(0), tokenBalance?.decimals ?? 18)}{" "}
-        </p>
-
-        <Button
-          disabled={isPending}
-          onClick={() => sendTransaction()}
-        >
-          {isPending ? "Sending..." : "Send Chain Abstracted Transaction"}
-        </Button>
-
-        {intentData?.outputUiHash.uiHash && (
-          <a
-            href={`${EXPLORER_URL}/tx/${intentData.outputUiHash.uiHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary text-sm underline underline-offset-4"
-          >
-            View Transaction
-          </a>
-        )}
       </div>
-    </div>
+    </>
   );
 };
 

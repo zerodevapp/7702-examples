@@ -15,7 +15,6 @@ import { Toaster } from "sonner";
 import "@/app/globals.css";
 import { useParams } from "next/navigation";
 import { AccountProviders } from "@/context/account-providers/provider-context";
-import Link from "next/link";
 // import { ThemeProvider } from "@/components/theme-provider";
 
 const firaCode = Fira_Code({
@@ -81,12 +80,11 @@ export default function RootLayout({
                   description={
                     <>
                       <p className="px-6">
-                        To sponsor gas, create a gas policy such as <span className="mx-[1ch] font-medium">&quot;Sponsor All&quot;</span>
+                        To sponsor gas, create a gas policy such as{" "}
+                        <span className="mx-[1ch] font-medium">&quot;Sponsor All&quot;</span>
                         on the ZeroDev dashboard.
                       </p>
-                      <p className="px-6">
-                        Then, set up a paymaster client with the paymaster RPC from the dashboard.
-                      </p>
+                      <p className="px-6">Then, set up a paymaster client with the paymaster RPC from the dashboard.</p>
                     </>
                   }
                 />
@@ -101,8 +99,8 @@ export default function RootLayout({
                   key="batching"
                   description={
                     <p className="px-6">
-                      When you need to send multiple transactions, you can batch them together to save on gas fees, latency, and
-                      the number of times a user needs to sign.
+                      When you need to send multiple transactions, you can batch them together to save on gas fees,
+                      latency, and the number of times a user needs to sign.
                       <br />
                       <br />
                       Each call in the example below that would have been a separate transaction is batched together and
@@ -122,19 +120,21 @@ export default function RootLayout({
                   description={
                     <>
                       <p className="px-6">
-                        With ZeroDev smart accounts, you can create temporary keys (session keys) with specific permissions.
+                        With ZeroDev smart accounts, you can create temporary keys (session keys) with specific
+                        permissions.
                       </p>
                       <p className="px-6">
-                        With session keys, you can sign transactions without asking for further user
-                        confirmations, therefore enabling "1-click trading."  You can also automate transactions
-                        on the server side, to enable use cases like subscription.
+                        With session keys, you can sign transactions without asking for further user confirmations,
+                        therefore enabling &quot;1-click trading.&quot; You can also automate transactions on the server
+                        side, to enable use cases like subscription.
                       </p>
                       <p className="px-6">
-                        Thanks to permissions, the user can rest assured that their funds are safe, since
-                        the session keys can only do what they were explicitly given permissions to do.
+                        Thanks to permissions, the user can rest assured that their funds are safe, since the session
+                        keys can only do what they were explicitly given permissions to do.
                       </p>
                       <p className="px-6">
-                        In this example, we will create a session key that's allowed to transfer no more than 10 tokens.
+                        In this example, we will create a session key that&apos;s allowed to transfer no more than 10
+                        tokens.
                       </p>
                     </>
                   }
