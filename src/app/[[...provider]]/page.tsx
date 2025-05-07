@@ -40,10 +40,23 @@ export default function Home() {
               This guide will show you how to upgrade EOAs to smart accounts using the ZeroDev SDK and Viem.
             </p>
           ) : (
-            <p className="">
-              This guide assumes that you are building a dapp with embedded wallets powered by{" "}
-              {capitalizeProvider(selectedProvider)}. We will walk you through:
-            </p>
+            <div>
+              <p className="">
+                This guide assumes that you are building a dapp with embedded wallets powered by{" "}
+                {capitalizeProvider(selectedProvider)}.  If you are using another embedded wallet, check{" "}
+                <Link
+                  className="text-primary underline underline-offset-4"
+                  href="/"
+                >
+                  here
+                </Link>
+                .
+              </p>
+              <br />
+              <p className="">
+                In this guide, we will walk you through:
+              </p>
+            </div>
           )}
           <ul className="list-disc pl-8">
             <li>
@@ -82,7 +95,7 @@ export default function Home() {
 
           {selectedProvider === "local" && (
             <>
-              <p>Check out the integration examples for embedded wallets:</p>
+              <p>For integration with specific embedded wallets, check out these guides:</p>
               <ul className="list-disc pl-8">
                 <li>
                   <Link
@@ -92,22 +105,12 @@ export default function Home() {
                     Privy
                   </Link>
                 </li>
-                {/* <li>
-                  <Link
-                    className="text-primary underline underline-offset-4"
-                    href="/dynamic"
-                  >
-                    Dynamic
-                  </Link>
+                <li>
+                  Dynamic
                 </li>
                 <li>
-                  <Link
-                    className="text-primary underline underline-offset-4"
-                    href="/turnkey"
-                  >
-                    Turnkey
-                  </Link>
-                </li> */}
+                  Turnkey
+                </li>
               </ul>
             </>
           )}
