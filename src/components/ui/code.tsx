@@ -80,7 +80,7 @@ const PackageTabs = ({ packageManagers, className }: { packageManagers: Command[
           key={pm.type}
           value={pm.type}
         >
-          <pre className="h-full overflow-auto p-4 text-sm">
+          <pre className="h-full max-h-[500px] overflow-auto p-4 text-sm">
             <code className={`language-bash`}>{pm.command}</code>
           </pre>
         </TabsContent>
@@ -119,7 +119,7 @@ const FileTabs = ({ files, className }: { files: CodeFile[]; className?: string 
         <TabsContent
           key={file.name}
           value={file.name}
-          className="mt-0 h-full"
+          className="mt-0 max-h-[500px] overflow-auto"
         >
           <SyntaxHighlighter
             language={file.language}
@@ -131,7 +131,7 @@ const FileTabs = ({ files, className }: { files: CodeFile[]; className?: string 
                   ...props.style,
                   padding: "0.75rem",
                 }}
-                className="h-full overflow-auto text-sm"
+                className="text-sm"
               />
             )}
             CodeTag={(props) => (
