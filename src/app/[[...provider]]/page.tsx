@@ -40,10 +40,23 @@ export default function Home() {
               This guide will show you how to upgrade EOAs to smart accounts using the ZeroDev SDK and Viem.
             </p>
           ) : (
-            <p className="">
-              This guide assumes that you are building a dapp with embedded wallets powered by{" "}
-              {capitalizeProvider(selectedProvider)}. We will walk you through:
-            </p>
+            <div>
+              <p className="">
+                This guide assumes that you are building a dapp with embedded wallets powered by{" "}
+                {capitalizeProvider(selectedProvider)}.  If you are using another embedded wallet, check{" "}
+                <Link
+                  className="text-primary underline underline-offset-4"
+                  href="/"
+                >
+                  here
+                </Link>
+                .
+              </p>
+              <br />
+              <p className="">
+                In this guide, we will walk you through:
+              </p>
+            </div>
           )}
           <ul className="list-disc pl-8">
             <li>
