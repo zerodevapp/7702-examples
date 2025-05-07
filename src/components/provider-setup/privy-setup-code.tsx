@@ -46,7 +46,7 @@ const walletClient = createWalletClient({
 
 const authorization = await signAuthorization({
   contractAddress: kernelAddresses.accountImplementationAddress,
-  chainId: sepolia.id,
+  chainId: baseSepolia.id,
 });
 
 const kernelAccount = await create7702KernelAccount(sepoliaPublicClient, {
