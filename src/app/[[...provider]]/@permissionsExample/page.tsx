@@ -85,7 +85,7 @@ const PermissionsExample = () => {
               value: zeroAddress,
             },
             {
-              condition: ParamCondition.LESS_THAN,
+              condition: ParamCondition.LESS_THAN_OR_EQUAL,
               value: parseUnits("10", ZERODEV_DECIMALS),
             },
           ],
@@ -252,7 +252,7 @@ const PermissionsExample = () => {
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
             />
-            <p className="text-sm">This transaction will be rejected if the amount is not less than 10 ZDEV.</p>
+            <p className="text-sm">This transaction will be rejected if the amount is more than 10 ZDEV.</p>
           </div>
 
           <Button
