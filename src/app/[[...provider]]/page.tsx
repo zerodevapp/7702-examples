@@ -92,7 +92,7 @@ export default function Home() {
                     Privy
                   </Link>
                 </li>
-                <li>
+                {/* <li>
                   <Link
                     className="text-primary underline underline-offset-4"
                     href="/dynamic"
@@ -107,7 +107,7 @@ export default function Home() {
                   >
                     Turnkey
                   </Link>
-                </li>
+                </li> */}
               </ul>
             </>
           )}
