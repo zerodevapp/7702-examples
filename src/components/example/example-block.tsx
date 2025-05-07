@@ -45,7 +45,7 @@ const ExampleBlock = ({ index, title, docs, github, description, example, codeBl
           asChild
           variant={"outline"}
         >
-          <Link href={github}>Full Code</Link>
+          <Link href={github} target="_blank" rel="noopener noreferrer">Code</Link>
         </Button>
       </div>
     </section>
