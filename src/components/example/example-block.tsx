@@ -39,7 +39,7 @@ const ExampleBlock = ({ index, title, docs, github, description, example, codeBl
           asChild
           variant={"outline"}
         >
-          <Link href={docs}>Docs</Link>
+          <Link href={docs} target="_blank" rel="noopener noreferrer">Docs</Link>
         </Button>
         <Button
           asChild

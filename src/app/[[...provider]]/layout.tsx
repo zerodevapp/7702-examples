@@ -15,6 +15,7 @@ import { Toaster } from "sonner";
 import "@/app/globals.css";
 import { useParams } from "next/navigation";
 import { AccountProviders } from "@/context/account-providers/provider-context";
+import Link from "next/link";
 // import { ThemeProvider } from "@/components/theme-provider";
 
 const firaCode = Fira_Code({
@@ -73,7 +74,7 @@ export default function RootLayout({
                 <ExampleBlock
                   index={1}
                   title="Gas Sponsorship"
-                  docs="https://docs.privy.io/guides/gas-sponsorship"
+                  docs="https://docs.zerodev.app/sdk/core-api/sponsor-gas"
                   github="https://github.com/privy-io/privy-gas-sponsorship"
                   example={gasSponsorshipExample}
                   codeBlock={gasSponsorshipExampleCode}
@@ -81,9 +82,11 @@ export default function RootLayout({
                   description={
                     <>
                       <p className="px-6">
-                        Sponsoring gas for users is as easy as setting up a project on the ZeroDev dashboard, creating a
-                        new <span className="mx-[1ch] font-medium">&quot;Sponsor All&quot;</span> policy and sending the
-                        user ops with the Paymaster configured.
+                        To sponsor gas, create a gas policy such as <span className="mx-[1ch] font-medium">&quot;Sponsor All&quot;</span>
+                        on the ZeroDev dashboard.
+                      </p>
+                      <p className="px-6">
+                        Then, set up a paymaster client with the paymaster RPC from the dashboard.
                       </p>
                     </>
                   }
@@ -92,14 +95,14 @@ export default function RootLayout({
                 <ExampleBlock
                   index={2}
                   title="Batching"
-                  docs="https://docs.privy.io/guides/batching"
+                  docs="https://docs.zerodev.app/sdk/core-api/batch-transactions"
                   github="https://github.com/privy-io/privy-batching"
                   example={batchingExample}
                   codeBlock={batchingExampleCode}
                   key="batching"
                   description={
                     <p className="px-6">
-                      When you need to send multiple transactions, you can batch them together to save on gas fees and
+                      When you need to send multiple transactions, you can batch them together to save on gas fees, latency, and
                       the number of times a user needs to sign.
                       <br />
                       <br />
@@ -112,27 +115,35 @@ export default function RootLayout({
                 <ExampleBlock
                   index={3}
                   title="Permissions"
-                  docs="https://docs.privy.io/guides/permissions"
+                  docs="https://docs.zerodev.app/sdk/permissions/intro"
                   github="https://github.com/privy-io/privy-permissions"
                   example={permissionsExample}
                   codeBlock={permissionsExampleCode}
                   key="permissions"
                   description={
-                    <p className="px-6">
-                      Permissions allow you to have a finer control over how users interact with their smart wallet. You
-                      can create new (session keys) signers for the smart account, and revoke them when the session
-                      ends.
-                      <br />
-                      <br />
-                      You can create signers which can have certain policies like which contract they can call, what
-                      functions they can call and signer customisation (ECDSA, WebAuthn).
-                    </p>
+                    <>
+                      <p className="px-6">
+                        With ZeroDev smart accounts, you can create temporary keys (session keys) with specific permissions.
+                      </p>
+                      <p className="px-6">
+                        With session keys, you can sign transactions without asking for further user
+                        confirmations, therefore enabling "1-click trading."  You can also automate transactions
+                        on the server side, to enable use cases like subscription.
+                      </p>
+                      <p className="px-6">
+                        Thanks to permissions, the user can rest assured that their funds are safe, since
+                        the session keys can only do what they were explicitly given permissions to do.
+                      </p>
+                      <p className="px-6">
+                        In this example, we will create a session key that's allowed to transfer no more than 10 tokens.
+                      </p>
+                    </>
                   }
                 />
                 <ExampleBlock
                   index={4}
                   title="Chain Abstraction"
-                  docs="https://docs.privy.io/guides/chain-abstraction"
+                  docs="https://docs.zerodev.app/sdk/advanced/chain-abstraction"
                   github="https://github.com/privy-io/privy-chain-abstraction"
                   example={chainAbstractionExample}
                   codeBlock={chainAbstractionExampleCode}
