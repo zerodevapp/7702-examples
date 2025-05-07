@@ -194,7 +194,7 @@ const BatchingExample = () => {
 
           {userOpReceipt && (
             <a
-              href={`${EXPLORER_URL}/op/${userOpReceipt.receipt.transactionHash}`}
+              href={`${EXPLORER_URL}/tx/${userOpReceipt.receipt.transactionHash}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-primary text-sm underline underline-offset-4"

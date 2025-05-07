@@ -215,54 +215,64 @@ const PermissionsExample = () => {
           Create 7702 Account with <span className="capitalize">{provider}</span> to try out the examples!
         </div>
       )}
-      <div className="flex w-full flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">1. Create a session key</Badge>
+      <div
+        className="border-primary/10 relative h-full w-full space-y-4 border-2 p-4 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:select-none"
+        ref={containerRef}
+        aria-disabled={isDisabled}
+      >
+        <h4 className="text-lg font-medium">Permissions Example</h4>
+
+        <div className="flex w-full flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="h-9 text-sm font-medium">1. Create a session key</Badge>
+
+            <Button
+              className="h-9"
+              onClick={createSessionKey}
+            >
+              Create
+            </Button>
+
+            {sessionKernelClient && (
+              <div className="w-full space-y-2">
+                <p className="truncate text-sm">{sessionAccountAddress}</p>
+                <p className="text-sm">
+                  This key has permission to transfer less than 10 ZDEV from the master account.
+                </p>
+              </div>
+            )}
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Badge className="h-9 text-sm font-medium">2. Transfer ZDEV</Badge>
+            <Input
+              className="bg-background w-fit flex-1"
+              type="text"
+              placeholder="Amount"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+            />
+            <p className="text-sm">This transaction will be rejected if the amount is not less than 10 ZDEV.</p>
+          </div>
 
           <Button
-            className="h-9"
-            onClick={createSessionKey}
+            disabled={isPending}
+            onClick={() => sendTransactionWithAmount()}
           >
-            Create
+            {isPending ? "Sending..." : "Send Transaction"}
           </Button>
 
-          {sessionKernelClient && (
-            <div className="w-full space-y-2">
-              <p className="truncate text-sm">{sessionAccountAddress}</p>
-              <p className="text-sm">This key has permission to transfer less than 10 ZDEV from the master account.</p>
-            </div>
+          {txHash && (
+            <a
+              href={`${EXPLORER_URL}/tx/${txHash}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary text-sm underline underline-offset-4"
+            >
+              Explorer
+            </a>
           )}
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge className="h-9 text-sm font-medium">2. Transfer ZDEV</Badge>
-          <Input
-            className="bg-background w-fit flex-1"
-            type="text"
-            placeholder="Amount"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-          />
-          <p className="text-sm">This transaction will be rejected if the amount is not less than 10 ZDEV.</p>
-        </div>
-
-        <Button
-          disabled={isPending}
-          onClick={() => sendTransactionWithAmount()}
-        >
-          {isPending ? "Sending..." : "Send Transaction"}
-        </Button>
-
-        {txHash && (
-          <a
-            href={`${EXPLORER_URL}/op/${txHash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-primary text-sm underline underline-offset-4"
-          >
-            Explorer
-          </a>
-        )}
       </div>
     </>
   );
