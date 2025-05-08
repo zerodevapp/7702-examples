@@ -97,7 +97,6 @@ const TurnkeyAccountProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     const viemAccount = await createAccount({
-      // @ts-expect-error: Internal type error
       client: turnkeyActiveClient,
       organizationId: suborgId!,
       signWith: selectedAccount?.address,
