@@ -16,7 +16,7 @@ export const entryPoint = getEntryPoint("0.7");
 export const TURNKEY_ORG_ID = process.env.NEXT_PUBLIC_TURNKEY_ORGANIZATION_ID!;
 export const EXPLORER_URL = baseSepolia.blockExplorers.default.url;
 
-export const ZERODEV_TOKEN_ADDRESS = "0x65A49dF64216bE58F8851A553863658dB7Fe301F";
+export const ZERODEV_TOKEN_ADDRESS = "0xB763277E5139fB8Ac694Fb9ef14489ec5092750c";
 export const ZERODEV_DECIMALS = 6;
 
 export const BASE_USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";

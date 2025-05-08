@@ -8,13 +8,23 @@ import { EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/con
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { encodeFunctionData, parseUnits } from "viem";
+import { encodeFunctionData, formatUnits, parseUnits } from "viem";
 import { baseSepolia } from "viem/chains";
 import { Loader } from "lucide-react";
+import { useBalance } from "wagmi";
 
 const GasSponsorshipExample = () => {
-  const { embeddedWallet, kernelAccount, kernelAccountClient, provider } = useAccountProviderContext();
+  const { embeddedWallet, kernelAccountClient, provider } = useAccountProviderContext();
   const [amount, setAmount] = useState("");
+
+  const { data: balance } = useBalance({
+    address: embeddedWallet?.address,
+    token: ZERODEV_TOKEN_ADDRESS,
+    query: {
+      refetchInterval: 5000,
+    },
+    chainId: baseSepolia.id,
+  });
 
   const {
     mutate: sendTransaction,
@@ -23,11 +33,10 @@ const GasSponsorshipExample = () => {
   } = useMutation({
     mutationKey: ["gasSponsorship sendTransaction", kernelAccountClient?.account?.address, amount],
     mutationFn: async () => {
-      if (!kernelAccountClient) throw new Error("No kernel client found");
-      if (!kernelAccount) throw new Error("No kernel account found");
+      if (!kernelAccountClient?.account) throw new Error("No kernel client found");
 
       return kernelAccountClient.sendTransaction({
-        account: kernelAccount,
+        account: kernelAccountClient.account,
         to: ZERODEV_TOKEN_ADDRESS,
         value: BigInt(0),
         data: encodeFunctionData({
@@ -42,7 +51,7 @@ const GasSponsorshipExample = () => {
             },
           ],
           functionName: "mint",
-          args: [kernelAccount.address, parseUnits(amount, ZERODEV_DECIMALS)],
+          args: [kernelAccountClient.account.address, parseUnits(amount, ZERODEV_DECIMALS)],
         }),
         chain: baseSepolia,
       });
@@ -60,7 +69,7 @@ const GasSponsorshipExample = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const signInTooltipRef = useRef<HTMLDivElement>(null);
 
-  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccount, [embeddedWallet, kernelAccount]);
+  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccountClient, [embeddedWallet, kernelAccountClient]);
 
   useEffect(() => {
     const signInTooltip = signInTooltipRef.current;
@@ -119,6 +128,10 @@ const GasSponsorshipExample = () => {
               onChange={(e) => setAmount(e.target.value)}
             />
           </div>
+
+          <p className="text-sm">
+            Balance: {formatUnits(balance?.value ?? BigInt(0), balance?.decimals ?? 18)} {balance?.symbol}
+          </p>
 
           <Button
             disabled={isPending || isDisabled}

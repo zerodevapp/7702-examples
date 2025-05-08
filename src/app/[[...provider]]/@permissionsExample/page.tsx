@@ -26,10 +26,10 @@ import {
 } from "@zerodev/sdk";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { encodeFunctionData, http, parseUnits, zeroAddress } from "viem";
+import { encodeFunctionData, formatUnits, http, parseUnits, zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
-import { usePublicClient } from "wagmi";
+import { useBalance, usePublicClient } from "wagmi";
 import { Loader } from "lucide-react";
 const PermissionsExample = () => {
   const [amount, setAmount] = useState<string>("");
@@ -38,20 +38,27 @@ const PermissionsExample = () => {
   const [sessionKernelClient, setSessionKernelClient] = useState<KernelAccountClient | null>(null);
 
   const {
-    kernelAccount: masterKernelAccount,
     kernelAccountClient: masterKernelAccountClient,
     ecdsaValidator: masterEcdsaValidator,
     embeddedWallet,
     provider,
-    kernelAccount,
   } = useAccountProviderContext();
 
   const publicClient = usePublicClient({
     chainId: baseSepolia.id,
   });
 
+  const { data: balance } = useBalance({
+    address: embeddedWallet?.address,
+    token: ZERODEV_TOKEN_ADDRESS,
+    query: {
+      refetchInterval: 5000,
+    },
+    chainId: baseSepolia.id,
+  });
+
   const createSessionKey = async () => {
-    if (!masterKernelAccount?.address || !masterKernelAccountClient?.account || !masterEcdsaValidator)
+    if (!masterKernelAccountClient?.account || !masterEcdsaValidator)
       throw new Error("Kernel account client not found");
     if (!publicClient) throw new Error("Public client not found");
 
@@ -107,7 +114,7 @@ const PermissionsExample = () => {
         regular: permissionPlugin,
       },
       kernelVersion: kernelVersion,
-      address: masterKernelAccount.address,
+      address: masterKernelAccountClient.account.address,
     });
     // save new session account
     setSessionAccountAddress(sessionAccount.address);
@@ -138,7 +145,7 @@ const PermissionsExample = () => {
   } = useMutation({
     mutationFn: async () => {
       if (!sessionKernelClient) throw new Error("Kernel client not found");
-      if (!masterKernelAccount?.address) throw new Error("Kernel account client not found");
+      if (!masterKernelAccountClient?.account?.address) throw new Error("Kernel account client not found");
 
       return sessionKernelClient?.sendTransaction({
         calls: [
@@ -174,7 +181,10 @@ const PermissionsExample = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const signInTooltipRef = useRef<HTMLDivElement>(null);
 
-  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccount, [embeddedWallet, kernelAccount]);
+  const isDisabled = useMemo(
+    () => !embeddedWallet || !masterKernelAccountClient,
+    [embeddedWallet, masterKernelAccountClient],
+  );
 
   useEffect(() => {
     const signInTooltip = signInTooltipRef.current;
@@ -254,6 +264,10 @@ const PermissionsExample = () => {
             />
             <p className="text-sm">This transaction will be rejected if the amount is more than 10 ZDEV.</p>
           </div>
+
+          <p className="text-sm">
+            Balance: {formatUnits(balance?.value ?? BigInt(0), balance?.decimals ?? 18)} {balance?.symbol}
+          </p>
 
           <Button
             disabled={isPending || isDisabled}

@@ -3,7 +3,6 @@ import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
 import { useQuery } from "@tanstack/react-query";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
-import { KernelAccountClient } from "@zerodev/sdk";
 import React from "react";
 import { baseSepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
@@ -18,74 +17,42 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
     chainId: baseSepolia.id,
   });
 
-  const { data: kernelAccountClient } = useQuery({
+  const { data: kernelAccountClients } = useQuery({
     queryKey: [PROVIDER, "kernelAccountClient", primaryWallet?.address],
     queryFn: async () => {
-      if (!primaryWallet) {
-        console.log("[DYNAMIC] No primary wallet found");
-        return null;
-      }
-
+      if (!primaryWallet) return null;
+      if (!publicClient) return null;
       if (!isZeroDevConnector(primaryWallet.connector)) {
-        console.log("[DYNAMIC] Connector is not a ZeroDev connector");
-        return null;
+        throw new Error("[DYNAMIC] Connector is not a ZeroDev connector");
       }
+      await primaryWallet.connector.switchNetwork({ networkChainId: baseSepolia.id });
+
       const walletClient = primaryWallet.connector.getWalletClient?.();
-      console.log({ walletClient, primaryWallet });
+
+      if (!walletClient) {
+        throw new Error("[DYNAMIC] No wallet client found");
+      }
 
       const connector = primaryWallet.connector;
       const _kernelAccountClient = connector.getAccountAbstractionProvider({
         withSponsorship: true,
       });
 
+      // switch network to baseSepolia
+
       if (!_kernelAccountClient) {
         console.error("[DYNAMIC] Kernel client not found");
         return null;
       }
 
-      return _kernelAccountClient as KernelAccountClient;
-    },
-  });
-  const { data: ecdsaValidator } = useQuery({
-    queryKey: [PROVIDER, "ecdsaValidator", primaryWallet?.address],
-    queryFn: async () => {
-      if (!primaryWallet) {
-        console.error("[DYNAMIC] No primary wallet found");
-        return null;
-      }
-
-      if (!publicClient) {
-        console.error("[DYNAMIC] No public client found");
-        return null;
-      }
-
-      if (!isZeroDevConnector(primaryWallet.connector)) {
-        console.error("[DYNAMIC] Connector is not a ZeroDev connector");
-        return null;
-      }
-      const dynamicWalletClient = primaryWallet?.connector?.getWalletClient();
-
-      if (!dynamicWalletClient) {
-        console.error("[DYNAMIC] No dynamic wallet client found");
-        return null;
-      }
-
       // Pass your `smartAccountSigner` to the validator
       const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
-        signer: dynamicWalletClient,
+        signer: walletClient,
         entryPoint: entryPoint,
         kernelVersion: kernelVersion,
       });
 
-      return ecdsaValidator;
-    },
-  });
-
-  const { data: kernelAccount } = useQuery({
-    queryKey: [PROVIDER, "kernelAccount", primaryWallet?.address],
-    queryFn: async () => {
-      if (!kernelAccountClient) return null;
-      return kernelAccountClient.account;
+      return { kernelAccountClient: _kernelAccountClient, ecdsaValidator };
     },
   });
 
@@ -106,12 +73,12 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
 
   // isDeployed
   const { data: isDeployed } = useQuery({
-    queryKey: [PROVIDER, "isDeployed", kernelAccountClient?.account?.address],
+    queryKey: [PROVIDER, "isDeployed", kernelAccountClients?.kernelAccountClient?.account?.address],
     queryFn: async () => {
-      if (!kernelAccountClient?.account) return false;
-      return kernelAccountClient.account.isDeployed();
+      if (!kernelAccountClients?.kernelAccountClient?.account) return false;
+      return kernelAccountClients.kernelAccountClient.account.isDeployed();
     },
-    enabled: !!kernelAccountClient?.account,
+    enabled: !!kernelAccountClients?.kernelAccountClient?.account,
   });
 
   return (
@@ -121,9 +88,8 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
         login: () => Promise.resolve(),
         embeddedWallet,
         isDeployed: Boolean(isDeployed),
-        kernelAccount,
-        kernelAccountClient,
-        ecdsaValidator,
+        kernelAccountClient: kernelAccountClients?.kernelAccountClient,
+        ecdsaValidator: kernelAccountClients?.ecdsaValidator,
         intentClient: null,
         createIntentClient: async () => {
           throw new Error("Not implemented");
