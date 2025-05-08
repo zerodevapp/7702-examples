@@ -295,7 +295,6 @@ const LocalAccountProvider = ({ children }: { children: React.ReactNode }) => {
         isDeployed: Boolean(isDeployed),
         login: signIn,
         kernelAccountClient: kernelClients?.kernelAccountClient,
-        kernelAccount: kernelClients?.kernelAccount,
         ecdsaValidator: kernelClients?.ecdsaValidator,
         intentClient: undefined,
         createIntentClient: async () => {
