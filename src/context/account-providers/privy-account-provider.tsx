@@ -338,7 +338,6 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         embeddedWallet,
         isDeployed: Boolean(isDeployed),
         kernelAccountClient: kernelClients?.kernelAccountClient,
-        kernelAccount: kernelClients?.kernelAccount,
         ecdsaValidator: kernelClients?.ecdsaValidator,
         intentClient: undefined,
         createIntentClient: async () => {
