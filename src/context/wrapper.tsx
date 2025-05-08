@@ -11,6 +11,8 @@ import DynamicAccountProvider from "./account-providers/dynamic-account-provider
 import LocalAccountProvider from "./account-providers/local-account-provider";
 import PrivyAccountProvider from "./account-providers/privy-account-provider";
 import { AccountProviders } from "./account-providers/provider-context";
+import TurnkeyAccountProvider from "./account-providers/turnkey-account-provider";
+import { TurnkeyProvider } from "@turnkey/sdk-react";
 
 export const AccountProviderWrapperContext = createContext<{
   accountProvider: AccountProviders;
@@ -80,6 +82,25 @@ const AccountProviderWrapper = ({
         </DynamicContextProvider>
       );
       return DynamProviderWrapper;
+    }
+
+    if (accountProvider === "turnkey") {
+      const TurnkeyProviderWrapper = ({ children }: { children: React.ReactNode }) => (
+        <WagmiProvider config={wagmiConfig}>
+          <TurnkeyProvider
+            config={{
+              // apiBaseUrl: "https://api.turnkey.com",
+              apiBaseUrl: process.env.NEXT_PUBLIC_BASE_URL!,
+              defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
+              iframeUrl: "https://auth.turnkey.com",
+              rpId: process.env.NEXT_PUBLIC_RP_ID, // Your application's domain for WebAuthn flows
+            }}
+          >
+            <TurnkeyAccountProvider>{children}</TurnkeyAccountProvider>
+          </TurnkeyProvider>
+        </WagmiProvider>
+      );
+      return TurnkeyProviderWrapper;
     }
 
     const LocalProviderWrapper = ({ children }: { children: React.ReactNode }) => (

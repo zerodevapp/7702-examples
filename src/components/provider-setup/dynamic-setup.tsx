@@ -1,11 +1,11 @@
 import CodeBlocks from "../example/code-blocks";
-import { privySetupCode } from "./privy-setup-code";
-const PrivySetup = () => {
+import { dynamicSetupCode } from "./dynamic-setup-code";
+const DynamicSetup = () => {
   return (
     <div className="flex flex-col gap-4 overflow-hidden">
-      <CodeBlocks codeBlocks={privySetupCode} />
+      <CodeBlocks codeBlocks={dynamicSetupCode} />
     </div>
   );
 };
 
-export default PrivySetup;
+export default DynamicSetup;

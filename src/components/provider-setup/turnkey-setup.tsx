@@ -1,11 +1,11 @@
 import CodeBlocks from "../example/code-blocks";
-import { privySetupCode } from "./privy-setup-code";
-const PrivySetup = () => {
+import { turnkeySetupCode } from "./turnkey-setup-code";
+const TurnkeySetup = () => {
   return (
     <div className="flex flex-col gap-4">
-      <CodeBlocks codeBlocks={privySetupCode} />
+      <CodeBlocks codeBlocks={turnkeySetupCode} />
     </div>
   );
 };
 
-export default PrivySetup;
+export default TurnkeySetup;
