@@ -8,13 +8,23 @@ import { EXPLORER_URL, ZERODEV_DECIMALS, ZERODEV_TOKEN_ADDRESS } from "@/lib/con
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { encodeFunctionData, parseUnits } from "viem";
+import { encodeFunctionData, formatUnits, parseUnits } from "viem";
 import { baseSepolia } from "viem/chains";
 import { Loader } from "lucide-react";
+import { useBalance } from "wagmi";
 
 const GasSponsorshipExample = () => {
   const { embeddedWallet, kernelAccountClient, provider } = useAccountProviderContext();
   const [amount, setAmount] = useState("");
+
+  const { data: balance } = useBalance({
+    address: embeddedWallet?.address,
+    token: ZERODEV_TOKEN_ADDRESS,
+    query: {
+      refetchInterval: 5000,
+    },
+    chainId: baseSepolia.id,
+  });
 
   const {
     mutate: sendTransaction,
@@ -118,6 +128,10 @@ const GasSponsorshipExample = () => {
               onChange={(e) => setAmount(e.target.value)}
             />
           </div>
+
+          <p className="text-sm">
+            Balance: {formatUnits(balance?.value ?? BigInt(0), balance?.decimals ?? 18)} {balance?.symbol}
+          </p>
 
           <Button
             disabled={isPending || isDisabled}

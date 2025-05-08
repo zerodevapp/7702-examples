@@ -26,10 +26,10 @@ import {
 } from "@zerodev/sdk";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { encodeFunctionData, http, parseUnits, zeroAddress } from "viem";
+import { encodeFunctionData, formatUnits, http, parseUnits, zeroAddress } from "viem";
 import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
-import { usePublicClient } from "wagmi";
+import { useBalance, usePublicClient } from "wagmi";
 import { Loader } from "lucide-react";
 const PermissionsExample = () => {
   const [amount, setAmount] = useState<string>("");
@@ -45,6 +45,15 @@ const PermissionsExample = () => {
   } = useAccountProviderContext();
 
   const publicClient = usePublicClient({
+    chainId: baseSepolia.id,
+  });
+
+  const { data: balance } = useBalance({
+    address: embeddedWallet?.address,
+    token: ZERODEV_TOKEN_ADDRESS,
+    query: {
+      refetchInterval: 5000,
+    },
     chainId: baseSepolia.id,
   });
 
@@ -255,6 +264,10 @@ const PermissionsExample = () => {
             />
             <p className="text-sm">This transaction will be rejected if the amount is more than 10 ZDEV.</p>
           </div>
+
+          <p className="text-sm">
+            Balance: {formatUnits(balance?.value ?? BigInt(0), balance?.decimals ?? 18)} {balance?.symbol}
+          </p>
 
           <Button
             disabled={isPending || isDisabled}
