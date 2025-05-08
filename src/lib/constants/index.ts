@@ -15,7 +15,7 @@ export const baseSepoliaPaymasterRpc = `https://rpc.zerodev.app/api/v3/${PROJECT
 export const entryPoint = getEntryPoint("0.7");
 export const EXPLORER_URL = baseSepolia.blockExplorers.default.url;
 
-export const ZERODEV_TOKEN_ADDRESS = "0x65A49dF64216bE58F8851A553863658dB7Fe301F";
+export const ZERODEV_TOKEN_ADDRESS = "0x6254638dd066143912f221Ed2c021c94bCceD1D0";
 export const ZERODEV_DECIMALS = 6;
 
 export const BASE_USDC_ADDRESS = "0x036CbD53842c5426634e7929541eC2318f3dCF7e";

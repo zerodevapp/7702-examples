@@ -14,7 +14,7 @@ import { encodeFunctionData, erc20Abi, formatUnits, parseUnits } from "viem";
 import { sepolia, baseSepolia } from "viem/chains";
 import { useBalance } from "wagmi";
 const ChainAbstractionExample = () => {
-  const { kernelAccountClient, intentClient, createIntentClient, kernelAccount, embeddedWallet, provider } =
+  const { kernelAccountClient, intentClient, createIntentClient, embeddedWallet, provider } =
     useAccountProviderContext();
 
   const [amount, setAmount] = useState("");
@@ -152,7 +152,7 @@ const ChainAbstractionExample = () => {
 
   const containerRef = useRef<HTMLDivElement>(null);
   const signInTooltipRef = useRef<HTMLDivElement>(null);
-  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccount, [embeddedWallet, kernelAccount]);
+  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccountClient, [embeddedWallet, kernelAccountClient]);
   useEffect(() => {
     const signInTooltip = signInTooltipRef.current;
     const container = containerRef.current;

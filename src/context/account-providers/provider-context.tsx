@@ -1,8 +1,8 @@
 "use client";
 import { IntentClient } from "@zerodev/intent";
-import { CreateKernelAccountReturnType, KernelAccountClient, KernelValidator } from "@zerodev/sdk";
+import { KernelAccountClient, KernelValidator } from "@zerodev/sdk";
 import { createContext, useContext } from "react";
-import { SmartAccount, SendUserOperationParameters as ViemSendUserOperationParameters } from "viem/account-abstraction";
+import { SendUserOperationParameters as ViemSendUserOperationParameters } from "viem/account-abstraction";
 import { sendTransaction } from "viem/actions";
 
 export type SendTransactionParameters = Parameters<typeof sendTransaction>[1];
@@ -23,7 +23,7 @@ export interface AccountProviderContextInterface {
   isDeployed: boolean;
   login: () => Promise<void>;
   kernelAccountClient: KernelAccountClient | undefined | null;
-  kernelAccount: CreateKernelAccountReturnType<"0.7"> | SmartAccount | undefined | null;
+  // kernelAccount: CreateKernelAccountReturnType<"0.7"> | SmartAccount | undefined | null;
   ecdsaValidator: KernelValidator<"ECDSAValidator"> | undefined | null;
   intentClient: IntentClient | undefined | null;
   createIntentClient: () => Promise<IntentClient>;
@@ -38,7 +38,7 @@ export const AccountProviderContext = createContext<AccountProviderContextInterf
     throw new Error("Not implemented");
   },
   kernelAccountClient: undefined,
-  kernelAccount: undefined,
+  // kernelAccount: undefined,
   ecdsaValidator: undefined,
   intentClient: undefined,
   createIntentClient: async () => {

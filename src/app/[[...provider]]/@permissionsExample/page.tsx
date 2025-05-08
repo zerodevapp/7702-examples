@@ -38,12 +38,10 @@ const PermissionsExample = () => {
   const [sessionKernelClient, setSessionKernelClient] = useState<KernelAccountClient | null>(null);
 
   const {
-    kernelAccount: masterKernelAccount,
     kernelAccountClient: masterKernelAccountClient,
     ecdsaValidator: masterEcdsaValidator,
     embeddedWallet,
     provider,
-    kernelAccount,
   } = useAccountProviderContext();
 
   const publicClient = usePublicClient({
@@ -51,7 +49,7 @@ const PermissionsExample = () => {
   });
 
   const createSessionKey = async () => {
-    if (!masterKernelAccount?.address || !masterKernelAccountClient?.account || !masterEcdsaValidator)
+    if (!masterKernelAccountClient?.account || !masterEcdsaValidator)
       throw new Error("Kernel account client not found");
     if (!publicClient) throw new Error("Public client not found");
 
@@ -107,7 +105,7 @@ const PermissionsExample = () => {
         regular: permissionPlugin,
       },
       kernelVersion: kernelVersion,
-      address: masterKernelAccount.address,
+      address: masterKernelAccountClient.account.address,
     });
     // save new session account
     setSessionAccountAddress(sessionAccount.address);
@@ -138,7 +136,7 @@ const PermissionsExample = () => {
   } = useMutation({
     mutationFn: async () => {
       if (!sessionKernelClient) throw new Error("Kernel client not found");
-      if (!masterKernelAccount?.address) throw new Error("Kernel account client not found");
+      if (!masterKernelAccountClient?.account?.address) throw new Error("Kernel account client not found");
 
       return sessionKernelClient?.sendTransaction({
         calls: [
@@ -174,7 +172,10 @@ const PermissionsExample = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const signInTooltipRef = useRef<HTMLDivElement>(null);
 
-  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccount, [embeddedWallet, kernelAccount]);
+  const isDisabled = useMemo(
+    () => !embeddedWallet || !masterKernelAccountClient,
+    [embeddedWallet, masterKernelAccountClient],
+  );
 
   useEffect(() => {
     const signInTooltip = signInTooltipRef.current;

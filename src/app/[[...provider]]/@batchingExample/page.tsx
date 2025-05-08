@@ -14,7 +14,7 @@ import { baseSepolia } from "viem/chains";
 import { useBalance } from "wagmi";
 
 const BatchingExample = () => {
-  const { kernelAccountClient, embeddedWallet, provider, kernelAccount } = useAccountProviderContext();
+  const { kernelAccountClient, embeddedWallet, provider } = useAccountProviderContext();
 
   const [amount, setAmount] = useState("");
   const [toAddress, setToAddress] = useState("");
@@ -108,7 +108,7 @@ const BatchingExample = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const signInTooltipRef = useRef<HTMLDivElement>(null);
 
-  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccount, [embeddedWallet, kernelAccount]);
+  const isDisabled = useMemo(() => !embeddedWallet || !kernelAccountClient, [embeddedWallet, kernelAccountClient]);
 
   useEffect(() => {
     const signInTooltip = signInTooltipRef.current;
