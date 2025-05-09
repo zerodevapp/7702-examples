@@ -38,8 +38,6 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
         withSponsorship: true,
       });
 
-      // switch network to baseSepolia
-
       if (!_kernelAccountClient) {
         console.error("[DYNAMIC] Kernel client not found");
         return null;

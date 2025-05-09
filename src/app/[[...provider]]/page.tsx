@@ -105,7 +105,14 @@ export default function Home() {
                   </Link>
                 </li>
                 <li>Dynamic</li>
-                <li>Turnkey</li>
+                <li>
+                  <Link
+                    className="text-primary underline underline-offset-4"
+                    href="/turnkey"
+                  >
+                    Turnkey
+                  </Link>
+                </li>
               </ul>
             </>
           )}
