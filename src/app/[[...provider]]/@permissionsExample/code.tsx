@@ -21,6 +21,12 @@ const permissionPlugin = await toPermissionValidator(publicClient, {
   policies: [callPolicy],
 });
 
+const masterEcdsaValidator = await signerToEcdsaValidator(publicClient, {
+  signer: walletClient,
+  entryPoint,
+  kernelVersion,
+});
+
 const sessionKeyKernelAccount = await createKernelAccount(publicClient, {
   entryPoint,
   plugins: {

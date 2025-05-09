@@ -44,12 +44,6 @@ const connector = primaryWallet.connector;
 const kernelAccountClient = connector.getAccountAbstractionProvider({
   withSponsorship: true,
 });
-
-const ecdsaValidator = await signerToEcdsaValidator(publicClient, {
-  signer: walletClient,
-  entryPoint: entryPoint,
-  kernelVersion: kernelVersion,
-});
 `,
       },
       {

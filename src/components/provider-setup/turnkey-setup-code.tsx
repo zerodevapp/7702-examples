@@ -102,11 +102,6 @@ const kernelAccountClient = create7702KernelAccountClient({
   paymaster: baseSepoliaPaymasterClient,
   client: baseSepoliaPublicClient,
 });
-const ecdsaValidator = await signerToEcdsaValidator(baseSepoliaPublicClient, {
-  signer: viemWalletClient,
-  entryPoint,
-  kernelVersion,
-});
 `,
       },
       {
