@@ -13,6 +13,7 @@ import PrivyAccountProvider from "./account-providers/privy-account-provider";
 import { AccountProviders } from "./account-providers/provider-context";
 import TurnkeyAccountProvider from "./account-providers/turnkey-account-provider";
 import { TurnkeyProvider } from "@turnkey/sdk-react";
+import { ZerodevBundlerProvider } from "@dynamic-labs/sdk-api-core";
 
 export const AccountProviderWrapperContext = createContext<{
   accountProvider: AccountProviders;
@@ -70,7 +71,7 @@ const AccountProviderWrapper = ({
             environmentId: process.env.NEXT_PUBLIC_DYNAMIC_ENVIRONMENT_ID!,
             walletConnectors: [
               EthereumWalletConnectors,
-              ZeroDevSmartWalletConnectorsWithConfig({ bundlerProvider: "PIMLICO" }),
+              ZeroDevSmartWalletConnectorsWithConfig({ bundlerProvider: ZerodevBundlerProvider.Pimlico }),
             ],
           }}
         >

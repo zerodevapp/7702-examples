@@ -104,7 +104,14 @@ export default function Home() {
                     Privy
                   </Link>
                 </li>
-                <li>Dynamic</li>
+                <li>
+                  <Link
+                    className="text-primary underline underline-offset-4"
+                    href="/dynamic"
+                  >
+                    Dynamic
+                  </Link>
+                </li>
                 <li>
                   <Link
                     className="text-primary underline underline-offset-4"
