@@ -1,13 +1,33 @@
 import { CodeBlockProps } from "@/components/ui/code";
+import { AccountProviders } from "@/context/account-providers/provider-context";
 
-const gasSponsorshipExampleCode: Array<CodeBlockProps & { stepTitle?: string }> = [
-  {
-    type: "files",
-    files: [
-      {
-        name: "kernelClient.ts",
-        language: "typescript",
-        content: `const paymasterClient = createZeroDevPaymasterClient({
+const gasSponsorshipExampleCode = (provider: AccountProviders) => {
+  const blocks = [
+    {
+      type: "files",
+      files: [
+        {
+          name: "sendTransaction.ts",
+          language: "typescript",
+          content: `kernelAccountClient.sendTransaction({
+  account: kernelAccount,
+  to: ZERODEV_TOKEN_ADDRESS,
+  value: BigInt(0),
+  data: encodeFunctionData({
+    abi: ZERODEV_TOKEN_ABI,
+    functionName: "mint",
+    args: [kernelAccount.address, amount],
+  }),
+})`,
+        },
+      ],
+    },
+  ] as Array<CodeBlockProps & { stepTitle?: string }>;
+  if (provider !== "dynamic" && blocks[0].type === "files") {
+    blocks[0].files.unshift({
+      name: "kernelClient.ts",
+      language: "typescript",
+      content: `const paymasterClient = createZeroDevPaymasterClient({
   chain: baseSepolia,
   transport: http(baseSepoliaPaymasterRpc),
 });
@@ -24,23 +44,9 @@ const kernelAccountClient = create7702KernelAccountClient({
   client: baseSepoliaPublicClient,
 });
 `,
-      },
-      {
-        name: "sendTransaction.ts",
-        language: "typescript",
-        content: `kernelAccountClient.sendTransaction({
-  account: kernelAccount,
-  to: ZERODEV_TOKEN_ADDRESS,
-  value: BigInt(0),
-  data: encodeFunctionData({
-    abi: ZERODEV_TOKEN_ABI,
-    functionName: "mint",
-    args: [kernelAccount.address, amount],
-  }),
-})`,
-      },
-    ],
-  },
-];
+    });
+  }
+  return blocks;
+};
 
 export default gasSponsorshipExampleCode;

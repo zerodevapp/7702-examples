@@ -7,13 +7,13 @@ import "@/app/globals.css";
 import ExampleBlock from "@/components/example/example-block";
 import Footer from "@/components/footer";
 import Navigation from "@/components/navigation";
-import { AccountProviders } from "@/context/account-providers/provider-context";
+import { accountProviders, AccountProviders } from "@/context/account-providers/provider-context";
 import { ReactQueryProvider } from "@/context/react-query";
 import AccountProviderWrapper from "@/context/wrapper";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { Toaster } from "sonner";
 import "@turnkey/sdk-react/styles";
-
+import { useEffect } from "react";
 export default function Layout({
   children,
   batchingExample,
@@ -28,10 +28,18 @@ export default function Layout({
   chainAbstractionExample: React.ReactNode;
 }>) {
   const { provider } = useParams();
+  const accountProvider = provider?.[0] as AccountProviders;
+  const router = useRouter();
+
+  useEffect(() => {
+    if (accountProvider && !accountProviders.includes(accountProvider)) {
+      router.push("/");
+    }
+  }, [accountProvider, router]);
 
   return (
     <ReactQueryProvider>
-      <AccountProviderWrapper initialProvider={provider?.[0] as AccountProviders}>
+      <AccountProviderWrapper initialProvider={accountProvider}>
         <Navigation />
         <div className="border-primary container mx-auto max-w-5xl space-y-12 overflow-hidden border-x-2 py-6">
           <main className="space-y-12">
@@ -43,7 +51,7 @@ export default function Layout({
               docs="https://docs.zerodev.app/sdk/core-api/sponsor-gas"
               github="https://github.com/zerodevapp/7702-examples/blob/main/src/app/%5B%5B...provider%5D%5D/%40gasSponsorshipExample/page.tsx"
               example={gasSponsorshipExample}
-              codeBlock={gasSponsorshipExampleCode}
+              codeBlock={gasSponsorshipExampleCode(accountProvider)}
               key="gas-sponsorship"
               description={
                 <>
