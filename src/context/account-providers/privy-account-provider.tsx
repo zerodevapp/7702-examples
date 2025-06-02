@@ -7,12 +7,8 @@ import {
 } from "@/lib/constants";
 import { useCreateWallet, useLogin, usePrivy, useSignAuthorization, useWallets } from "@privy-io/react-auth";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import {
-  create7702KernelAccount,
-  create7702KernelAccountClient,
-  signerToEcdsaValidator,
-} from "@zerodev/ecdsa-validator";
-import { createZeroDevPaymasterClient } from "@zerodev/sdk";
+import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
+import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo } from "react";
 import { createWalletClient, custom, Hex, http } from "viem";
 import { baseSepolia, sepolia } from "viem/chains";
@@ -112,14 +108,14 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         chainId: baseSepolia.id,
       });
 
-      const kernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
-        signer: privyAccount,
+      const kernelAccount = await createKernelAccount(baseSepoliaPublicClient, {
+        eip7702Account: privyAccount,
         entryPoint,
         kernelVersion,
         eip7702Auth: authorization,
       });
 
-      const kernelAccountClient = create7702KernelAccountClient({
+      const kernelAccountClient = createKernelAccountClient({
         account: kernelAccount,
         chain: baseSepolia,
         bundlerTransport: http(baseSepoliaBundlerRpc),

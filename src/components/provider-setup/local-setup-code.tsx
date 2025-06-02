@@ -42,14 +42,14 @@ const authorization = await account.signAuthorization({
   address: kernelAddresses.accountImplementationAddress,
 });
 
-const kernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
-  signer: account,
+const kernelAccount = await createKernelAccount(baseSepoliaPublicClient, {
+  eip7702Account: account,
   entryPoint,
   kernelVersion,
   eip7702Auth: authorization,
 });
 
-const kernelAccountClient = create7702KernelAccountClient({
+const kernelAccountClient = createKernelAccountClient({
   account: kernelAccount,
   chain: baseSepolia,
   bundlerTransport: http(baseSepoliaBundlerRpc),

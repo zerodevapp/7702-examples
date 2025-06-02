@@ -32,9 +32,9 @@ const gasSponsorshipExampleCode = (provider: AccountProviders) => {
   transport: http(baseSepoliaPaymasterRpc),
 });
 
-const kernelAccount = await create7702KernelAccount(...);
+const kernelAccount = await createKernelAccount(...);
 
-const kernelAccountClient = create7702KernelAccountClient({
+const kernelAccountClient = createKernelAccountClient({
   paymaster: baseSepoliaPaymasterClient,
 
   // ...

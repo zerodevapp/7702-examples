@@ -76,26 +76,26 @@ const viemAccount = await createAccount({
   ethereumAddress: selectedAccount?.address,
 });
 
-const viemWalletClient = createWalletClient({
+const walletClient = createWalletClient({
   account: viemAccount as Account,
   chain: baseSepolia,
   transport: http(),
 });
 
-const authorization = await viemWalletClient.signAuthorization({
+const authorization = await walletClient.signAuthorization({
   chainId: baseSepolia.id,
   nonce: 0,
   address: kernelAddresses.accountImplementationAddress,
 });
 
-const kernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
-  signer: viemWalletClient,
+const kernelAccount = await createKernelAccount(baseSepoliaPublicClient, {
+  eip7702Account: walletClient,
   entryPoint,
   kernelVersion,
   eip7702Auth: authorization,
 });
 
-const kernelAccountClient = create7702KernelAccountClient({
+const kernelAccountClient = createKernelAccountClient({
   account: kernelAccount,
   chain: baseSepolia,
   bundlerTransport: http(baseSepoliaBundlerRpc),

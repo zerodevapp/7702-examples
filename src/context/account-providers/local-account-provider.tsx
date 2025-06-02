@@ -6,12 +6,8 @@ import {
   kernelVersion,
 } from "@/lib/constants";
 import { useQuery } from "@tanstack/react-query";
-import {
-  create7702KernelAccount,
-  create7702KernelAccountClient,
-  signerToEcdsaValidator,
-} from "@zerodev/ecdsa-validator";
-import { createZeroDevPaymasterClient } from "@zerodev/sdk";
+import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
+import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocalStorage } from "usehooks-ts";
 import { http, PrivateKeyAccount } from "viem";
@@ -91,14 +87,14 @@ const LocalAccountProvider = ({ children }: { children: React.ReactNode }) => {
         address: kernelAddresses.accountImplementationAddress,
       });
 
-      const kernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
-        signer: account,
+      const kernelAccount = await createKernelAccount(baseSepoliaPublicClient, {
+        eip7702Account: account,
         entryPoint,
         kernelVersion,
         eip7702Auth: authorization,
       });
 
-      const kernelAccountClient = create7702KernelAccountClient({
+      const kernelAccountClient = createKernelAccountClient({
         account: kernelAccount,
         chain: baseSepolia,
         bundlerTransport: http(baseSepoliaBundlerRpc),

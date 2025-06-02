@@ -8,17 +8,13 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { useTurnkey } from "@turnkey/sdk-react";
 import { createAccount } from "@turnkey/viem";
-import {
-  create7702KernelAccount,
-  create7702KernelAccountClient,
-  signerToEcdsaValidator,
-} from "@zerodev/ecdsa-validator";
+import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
+import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
 import React, { useEffect, useMemo } from "react";
 import { Account, createWalletClient, http } from "viem";
 import { baseSepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 import { AccountProviderContext, EmbeddedWallet } from "./provider-context";
-import { createZeroDevPaymasterClient } from "@zerodev/sdk";
 
 const PROVIDER = "turnkey";
 const TurnkeyAccountProvider = ({ children }: { children: React.ReactNode }) => {
@@ -97,6 +93,7 @@ const TurnkeyAccountProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     const viemAccount = await createAccount({
+      // @ts-ignore: type intersection issue
       client: turnkeyActiveClient,
       organizationId: suborgId!,
       signWith: selectedAccount?.address,
@@ -115,14 +112,14 @@ const TurnkeyAccountProvider = ({ children }: { children: React.ReactNode }) => 
       address: kernelAddresses.accountImplementationAddress,
     });
 
-    const kernelAccount = await create7702KernelAccount(baseSepoliaPublicClient, {
-      signer: viemWalletClient,
+    const kernelAccount = await createKernelAccount(baseSepoliaPublicClient, {
+      eip7702Account: viemWalletClient,
       entryPoint,
       kernelVersion,
       eip7702Auth: authorization,
     });
 
-    const kernelAccountClient = create7702KernelAccountClient({
+    const kernelAccountClient = createKernelAccountClient({
       account: kernelAccount,
       chain: baseSepolia,
       bundlerTransport: http(baseSepoliaBundlerRpc),

@@ -86,6 +86,7 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
         login: () => Promise.resolve(),
         embeddedWallet,
         isDeployed: Boolean(isDeployed),
+        // @ts-expect-error: dynamic sdk update will fix this
         kernelAccountClient: kernelAccountClients?.kernelAccountClient,
         ecdsaValidator: kernelAccountClients?.ecdsaValidator,
         intentClient: null,
