@@ -93,7 +93,7 @@ const TurnkeyAccountProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     const viemAccount = await createAccount({
-      // @ts-ignore: type intersection issue
+      // @ts-expect-error: type intersection issue
       client: turnkeyActiveClient,
       organizationId: suborgId!,
       signWith: selectedAccount?.address,
