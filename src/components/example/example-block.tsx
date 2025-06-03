@@ -4,7 +4,6 @@ import { Button } from "../ui/button";
 import { CodeBlockProps } from "../ui/code";
 import Heading from "../ui/heading";
 import CodeBlocks from "./code-blocks";
-import { useAccountWrapperContext } from "@/context/wrapper";
 type ExampleBlockProps = {
   title: string;
   docs: string;
@@ -16,11 +15,6 @@ type ExampleBlockProps = {
 };
 
 const ExampleBlock = ({ index, title, docs, github, description, example, codeBlock }: ExampleBlockProps) => {
-  const { accountProvider } = useAccountWrapperContext();
-  if (accountProvider === "dynamic" && title === "Permissions") {
-    // TODO: Fix SDK to support permissions with dynamic
-    return null;
-  }
   return (
     <section
       id={title.toLowerCase().replace(" ", "-")}
