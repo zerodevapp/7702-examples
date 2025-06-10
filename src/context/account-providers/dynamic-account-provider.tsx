@@ -1,6 +1,7 @@
 import { entryPoint, kernelVersion } from "@/lib/constants";
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
+import { isEthWalletConnector } from "@dynamic-labs/ethereum-core";
 import { useQuery } from "@tanstack/react-query";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import React from "react";
@@ -27,7 +28,11 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
       }
       await primaryWallet.connector.switchNetwork({ networkChainId: baseSepolia.id });
 
-      const walletClient = primaryWallet.connector.getWalletClient?.();
+      if (!primaryWallet.connector.eoaConnector || !isEthWalletConnector(primaryWallet.connector.eoaConnector)) {
+        throw new Error("[DYNAMIC] No eoa connector found");
+      }
+
+      const walletClient = await primaryWallet.connector.eoaConnector.getWalletClient();
 
       if (!walletClient) {
         throw new Error("[DYNAMIC] No wallet client found");

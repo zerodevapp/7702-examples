@@ -11,6 +11,7 @@
   "dependencies": {
     "@dynamic-labs/ethereum": "^4.19.5",
     "@dynamic-labs/ethereum-aa": "^4.19.5",
+    "@dynamic-labs/ethereum-core": "^4.19.5",
     "@dynamic-labs/sdk-api-core": "^0.0.681",
     "@dynamic-labs/sdk-react-core": "^4.19.5",
     "@dynamic-labs/wagmi-connector": "^4.19.5",
