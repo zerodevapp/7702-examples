@@ -35,10 +35,12 @@ import { useDynamicContext } from "@dynamic-labs/sdk-react-core"
 const kernelVersion = KERNEL_V3_3;
 const kernelAddresses = KernelVersionToAddressesMap[kernelVersion];
 
+const { primaryWallet } = useDynamicContext();
+
 // switch network to baseSepolia. this is helpful when using multiple chains
 // await primaryWallet.connector.switchNetwork({ networkChainId: baseSepolia.id });
 
-const walletClient = primaryWallet.connector.getWalletClient?.();
+const walletClient = await primaryWallet.connector.eoaConnector.getWalletClient() as WalletClient<Transport, Chain, Account>;
 const connector = primaryWallet.connector;
 
 const kernelAccountClient = connector.getAccountAbstractionProvider({
