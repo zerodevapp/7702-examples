@@ -1,6 +1,7 @@
 "use client";
 import { IntentClient } from "@zerodev/intent";
 import { KernelAccountClient, KernelValidator } from "@zerodev/sdk";
+import { Signer } from "@zerodev/sdk/types";
 import { createContext, useContext } from "react";
 import { SendUserOperationParameters as ViemSendUserOperationParameters } from "viem/account-abstraction";
 import { sendTransaction } from "viem/actions";
@@ -27,6 +28,7 @@ export interface AccountProviderContextInterface {
   ecdsaValidator: KernelValidator<"ECDSAValidator"> | undefined | null;
   intentClient: IntentClient | undefined | null;
   createIntentClient: () => Promise<IntentClient>;
+  signer: Signer | undefined | null;
 }
 
 export const AccountProviderContext = createContext<AccountProviderContextInterface>({
@@ -44,6 +46,7 @@ export const AccountProviderContext = createContext<AccountProviderContextInterf
   createIntentClient: async () => {
     throw new Error("Not implemented");
   },
+  signer: undefined,
 });
 
 export const useAccountProviderContext = () => {

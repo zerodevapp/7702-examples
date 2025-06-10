@@ -140,6 +140,7 @@ const TurnkeyAccountProvider = ({ children }: { children: React.ReactNode }) => 
       embeddedWallet,
       kernelAccountClient,
       ecdsaValidator,
+      viemWalletClient,
     };
   };
 
@@ -180,18 +181,9 @@ const TurnkeyAccountProvider = ({ children }: { children: React.ReactNode }) => 
         ecdsaValidator: sessionData?.ecdsaValidator,
         intentClient: undefined,
         kernelAccountClient: sessionData?.kernelAccountClient,
+        signer: sessionData?.viemWalletClient,
       }}
     >
-      {/* <TurnKeySignIn
-        privateKey={privateKey}
-        setPrivateKey={setPrivateKey}
-        signedMessage={signedMessage}
-        setSignedMessage={setSignedMessage}
-        subOrgId={subOrgId}
-        setSubOrgId={setSubOrgId}
-        openTurnkeySignInModal={openTurnkeySignInModal}
-        setOpenTurnkeySignInModal={setOpenTurnkeySignInModal}
-      /> */}
       {children}
     </AccountProviderContext.Provider>
   );

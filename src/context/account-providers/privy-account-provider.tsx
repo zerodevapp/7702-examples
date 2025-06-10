@@ -339,6 +339,7 @@ const PrivyAccountProvider = ({ children }: { children: React.ReactNode }) => {
         createIntentClient: async () => {
           throw new Error("Not implemented");
         },
+        signer: privyAccount,
       }}
     >
       {children}

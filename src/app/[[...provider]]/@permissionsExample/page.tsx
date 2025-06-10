@@ -15,12 +15,13 @@ import {
 } from "@/lib/constants";
 import { ZERODEV_TOKEN_ABI } from "@/lib/constants/zeroDevTokenAbi";
 import { useMutation } from "@tanstack/react-query";
-import { toPermissionValidator } from "@zerodev/permissions";
+import { deserializePermissionAccount, serializePermissionAccount, toPermissionValidator } from "@zerodev/permissions";
 import { CallPolicyVersion, ParamCondition, toCallPolicy } from "@zerodev/permissions/policies";
 import { toECDSASigner } from "@zerodev/permissions/signers";
 import {
   createKernelAccount,
   createKernelAccountClient,
+  CreateKernelAccountReturnType,
   createZeroDevPaymasterClient,
   KernelAccountClient,
 } from "@zerodev/sdk";
@@ -31,18 +32,24 @@ import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
 import { baseSepolia } from "viem/chains";
 import { useBalance, usePublicClient } from "wagmi";
 import { Loader } from "lucide-react";
+import { useLocalStorage } from "usehooks-ts";
+
 const PermissionsExample = () => {
   const [amount, setAmount] = useState<string>("");
   const [sessionAccountAddress, setSessionAccountAddress] = useState<`0x${string}` | null>(null);
-
   const [sessionKernelClient, setSessionKernelClient] = useState<KernelAccountClient | null>(null);
 
   const {
     kernelAccountClient: masterKernelAccountClient,
-    ecdsaValidator: masterEcdsaValidator,
     embeddedWallet,
     provider,
+    signer,
   } = useAccountProviderContext();
+
+  const [serialisedSessionKey, setSerialisedSessionKey] = useLocalStorage<string | null>(
+    `serialisedSessionKey-master:${embeddedWallet?.address}`,
+    null,
+  );
 
   const publicClient = usePublicClient({
     chainId: baseSepolia.id,
@@ -58,72 +65,76 @@ const PermissionsExample = () => {
   });
 
   const createSessionKey = async () => {
-    if (!masterKernelAccountClient?.account || !masterEcdsaValidator)
-      throw new Error("Kernel account client not found");
+    if (!masterKernelAccountClient?.account) throw new Error("Kernel account client not found");
     if (!publicClient) throw new Error("Public client not found");
+    if (!signer) throw new Error("Signer not found");
 
-    // if (serialisedSessionKey) {
-    //   sessionKeyKernelAccount = await deserializePermissionAccount(
-    //     publicClient,
-    //     entryPoint,
-    //     kernelVersion,
-    //     serialisedSessionKey,
-    //   );
-    // } else {
-    const _sessionPrivateKey = generatePrivateKey();
+    let sessionKeyKernelAccount: CreateKernelAccountReturnType<"0.7"> | null = null;
+    if (serialisedSessionKey) {
+      sessionKeyKernelAccount = await deserializePermissionAccount(
+        publicClient,
+        entryPoint,
+        kernelVersion,
+        serialisedSessionKey,
+      );
+    } else {
+      const _sessionPrivateKey = generatePrivateKey();
 
-    const sessionAccount = privateKeyToAccount(_sessionPrivateKey as `0x${string}`);
+      const sessionAccount = privateKeyToAccount(_sessionPrivateKey as `0x${string}`);
 
-    const sessionKeySigner = await toECDSASigner({
-      signer: sessionAccount,
-    });
+      const sessionKeySigner = await toECDSASigner({
+        signer: sessionAccount,
+      });
 
-    const callPolicy = toCallPolicy({
-      policyVersion: CallPolicyVersion.V0_0_4,
-      permissions: [
-        {
-          target: ZERODEV_TOKEN_ADDRESS,
-          valueLimit: BigInt(0),
-          abi: ZERODEV_TOKEN_ABI,
-          functionName: "transfer",
-          args: [
-            {
-              condition: ParamCondition.NOT_EQUAL,
-              value: zeroAddress,
-            },
-            {
-              condition: ParamCondition.LESS_THAN_OR_EQUAL,
-              value: parseUnits("10", ZERODEV_DECIMALS),
-            },
-          ],
+      const callPolicy = toCallPolicy({
+        policyVersion: CallPolicyVersion.V0_0_4,
+        permissions: [
+          {
+            target: ZERODEV_TOKEN_ADDRESS,
+            valueLimit: BigInt(0),
+            abi: ZERODEV_TOKEN_ABI,
+            functionName: "transfer",
+            args: [
+              {
+                condition: ParamCondition.NOT_EQUAL,
+                value: zeroAddress,
+              },
+              {
+                condition: ParamCondition.LESS_THAN_OR_EQUAL,
+                value: parseUnits("10", ZERODEV_DECIMALS),
+              },
+            ],
+          },
+        ],
+      });
+
+      const permissionPlugin = await toPermissionValidator(publicClient, {
+        entryPoint: entryPoint,
+        kernelVersion: kernelVersion,
+        signer: sessionKeySigner,
+        policies: [callPolicy],
+      });
+
+      sessionKeyKernelAccount = await createKernelAccount(publicClient, {
+        entryPoint,
+        eip7702Account: signer,
+        plugins: {
+          regular: permissionPlugin,
         },
-      ],
-    });
+        kernelVersion: kernelVersion,
+        address: masterKernelAccountClient.account.address,
+      });
 
-    const permissionPlugin = await toPermissionValidator(publicClient, {
-      entryPoint: entryPoint,
-      kernelVersion: kernelVersion,
-      signer: sessionKeySigner,
-      policies: [callPolicy],
-    });
+      setSerialisedSessionKey(await serializePermissionAccount(sessionKeyKernelAccount, _sessionPrivateKey));
+    }
 
-    const sessionKeyKernelAccount = await createKernelAccount(publicClient, {
-      entryPoint,
-      plugins: {
-        sudo: masterEcdsaValidator,
-        regular: permissionPlugin,
-      },
-      kernelVersion: kernelVersion,
-      address: masterKernelAccountClient.account.address,
-    });
-    // save new session account
-    setSessionAccountAddress(sessionAccount.address);
-    // setSerialisedSessionKey(await serializePermissionAccount(sessionKeyKernelAccount, _sessionPrivateKey));
+    setSessionAccountAddress(sessionKeyKernelAccount.address);
 
     const kernelPaymaster = createZeroDevPaymasterClient({
       chain: baseSepolia,
       transport: http(baseSepoliaPaymasterRpc),
     });
+
     const kernelClient = createKernelAccountClient({
       account: sessionKeyKernelAccount,
       chain: baseSepolia,

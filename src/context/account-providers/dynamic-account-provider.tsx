@@ -32,7 +32,11 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
         throw new Error("[DYNAMIC] No eoa connector found");
       }
 
-      const walletClient = await primaryWallet.connector.eoaConnector.getWalletClient() as WalletClient<Transport, Chain, Account>;
+      const walletClient = (await primaryWallet.connector.eoaConnector.getWalletClient()) as WalletClient<
+        Transport,
+        Chain,
+        Account
+      >;
 
       if (!walletClient) {
         throw new Error("[DYNAMIC] No wallet client found");
@@ -55,7 +59,7 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
         kernelVersion: kernelVersion,
       });
 
-      return { kernelAccountClient: _kernelAccountClient, ecdsaValidator };
+      return { kernelAccountClient: _kernelAccountClient, ecdsaValidator, walletClient };
     },
   });
 
@@ -97,6 +101,7 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
         createIntentClient: async () => {
           throw new Error("Not implemented");
         },
+        signer: kernelAccountClients?.walletClient,
       }}
     >
       {children}

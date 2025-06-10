@@ -296,6 +296,7 @@ const LocalAccountProvider = ({ children }: { children: React.ReactNode }) => {
         createIntentClient: async () => {
           throw new Error("Not implemented");
         },
+        signer: account,
       }}
     >
       {children}

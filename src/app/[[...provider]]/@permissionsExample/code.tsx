@@ -21,16 +21,11 @@ const permissionPlugin = await toPermissionValidator(publicClient, {
   policies: [callPolicy],
 });
 
-const masterEcdsaValidator = await signerToEcdsaValidator(publicClient, {
-  signer: walletClient,
-  entryPoint,
-  kernelVersion,
-});
 
 const sessionKeyKernelAccount = await createKernelAccount(publicClient, {
   entryPoint,
+  eip7702Account: masterSigner,
   plugins: {
-    sudo: masterEcdsaValidator,
     regular: permissionPlugin,
   },
   kernelVersion: kernelVersion,
@@ -48,7 +43,19 @@ const kernelClient = createKernelAccountClient({
       return kernelPaymaster.sponsorUserOperation({ userOperation });
     },
   },
-});`,
+});
+
+// Save serialisedSessionKey for later use
+const serialisedSessionKey = await serializePermissionAccount(sessionKeyKernelAccount, _sessionPrivateKey);
+
+// Deserialise session key
+const sessionKeyKernelAccount = await deserializePermissionAccount(
+  publicClient,
+  entryPoint,
+  kernelVersion,
+  serialisedSessionKey,
+);
+`,
       },
       {
         name: "callPolicy.ts",
