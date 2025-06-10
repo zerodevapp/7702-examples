@@ -1,13 +1,13 @@
 import { entryPoint, kernelVersion } from "@/lib/constants";
 import { isZeroDevConnector } from "@dynamic-labs/ethereum-aa";
 import { useDynamicContext } from "@dynamic-labs/sdk-react-core";
-import { isEthWalletConnector } from "@dynamic-labs/ethereum-core";
 import { useQuery } from "@tanstack/react-query";
 import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import React from "react";
 import { baseSepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
 import { AccountProviderContext, EmbeddedWallet } from "./provider-context";
+import { Account, Chain, Transport, WalletClient } from "viem";
 
 const PROVIDER = "dynamic";
 
@@ -28,11 +28,11 @@ const DynamicAccountProvider = ({ children }: { children: React.ReactNode }) => 
       }
       await primaryWallet.connector.switchNetwork({ networkChainId: baseSepolia.id });
 
-      if (!primaryWallet.connector.eoaConnector || !isEthWalletConnector(primaryWallet.connector.eoaConnector)) {
+      if (!primaryWallet.connector.eoaConnector) {
         throw new Error("[DYNAMIC] No eoa connector found");
       }
 
-      const walletClient = await primaryWallet.connector.eoaConnector.getWalletClient();
+      const walletClient = await primaryWallet.connector.eoaConnector.getWalletClient() as WalletClient<Transport, Chain, Account>;
 
       if (!walletClient) {
         throw new Error("[DYNAMIC] No wallet client found");
