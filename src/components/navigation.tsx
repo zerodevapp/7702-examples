@@ -12,6 +12,12 @@ const Navigation = () => {
         </div>
         <nav className="flex gap-6">
           <Link
+            href="https://dashboard.zerodev.app"
+            className="hover:text-primary px-4 py-2"
+          >
+            Dashboard
+          </Link>
+          <Link
             href="https://docs.zerodev.app"
             className="hover:text-primary px-4 py-2"
           >
