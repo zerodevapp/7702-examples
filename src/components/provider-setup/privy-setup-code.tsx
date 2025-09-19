@@ -26,22 +26,12 @@ export const privySetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDe
       {
         name: "client.ts",
         language: "typescript",
-        content: `import {
-  baseSepoliaBundlerRpc,
-  baseSepoliaPaymasterRpc,
-  entryPoint,
-  kernelAddresses,
-  kernelVersion,
-} from "@/lib/constants";
+        content: `
 import { useCreateWallet, useLogin, usePrivy, useSignAuthorization, useWallets } from "@privy-io/react-auth";
-import { useMutation, useQuery } from "@tanstack/react-query";
-import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
 import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
-import React, { useEffect, useMemo } from "react";
 import { createWalletClient, custom, Hex, http } from "viem";
 import { baseSepolia, sepolia } from "viem/chains";
 import { usePublicClient } from "wagmi";
-import { AccountProviderContext, EmbeddedWallet } from "./provider-context";
 
 const kernelVersion = KERNEL_V3_3;
 const kernelAddresses = KernelVersionToAddressesMap[kernelVersion];
@@ -52,13 +42,11 @@ const { user } = usePrivy();
 const { createWallet } = useCreateWallet();
 const { signAuthorization } = useSignAuthorization();
 
-const { login } = useLogin();
-
 const privyEmbeddedWallet = useMemo(() => {
   return wallets.find((wallet) => wallet.walletClientType === "privy");
 }, [wallets]);
 
-const walletClient = createWalletClient({
+const privyAccount = createWalletClient({
   account: privyEmbeddedWallet.address as Hex,
   chain: baseSepolia,
   transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
@@ -71,15 +59,9 @@ const baseSepoliaPublicClient = usePublicClient({
   chainId: baseSepolia.id,
 });
 
-createZeroDevPaymasterClient({
+const baseSepoliaPaymasterClient = createZeroDevPaymasterClient({
   chain: baseSepolia,
   transport: http(baseSepoliaPaymasterRpc),
-});
-
-const ecdsaValidator = await signerToEcdsaValidator(baseSepoliaPublicClient, {
-  signer: privyAccount,
-  entryPoint,
-  kernelVersion,
 });
 
 const authorization = await signAuthorization({
