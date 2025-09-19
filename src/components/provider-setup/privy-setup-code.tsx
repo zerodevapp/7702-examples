@@ -7,89 +7,88 @@ export const privySetupCode: Array<CodeBlockProps & { stepTitle?: string; stepDe
     packageManagers: [
       {
         type: "npm",
-        command:
-          "npm i @turnkey/sdk-react @turnkey/viem wagmi @zerodev/ecdsa-validator @zerodev/sdk @tanstack/react-query",
+        command: "npm i @privy-io/react-auth wagmi @zerodev/ecdsa-validator @zerodev/sdk @tanstack/react-query",
       },
       {
         type: "yarn",
-        command:
-          "yarn add @turnkey/sdk-react @turnkey/viem wagmi @zerodev/ecdsa-validator @zerodev/sdk @tanstack/react-query",
+        command: "yarn add @privy-io/react-auth wagmi @zerodev/ecdsa-validator @zerodev/sdk @tanstack/react-query",
       },
       {
         type: "pnpm",
-        command:
-          "pnpm add @turnkey/sdk-react @turnkey/viem wagmi @zerodev/ecdsa-validator @zerodev/sdk @tanstack/react-query",
+        command: "pnpm add @privy-io/react-auth wagmi @zerodev/ecdsa-validator @zerodev/sdk @tanstack/react-query",
       },
     ],
   },
   {
     type: "files",
-    stepDescription: "Setup the Turnkey context with your credentials. Initialise the 7702 client as follows.",
+    stepDescription: "Setup the Privy context with your credentials. Initialise the 7702 client as follows.",
     files: [
       {
         name: "client.ts",
         language: "typescript",
-        content: `import { useTurnkey } from "@turnkey/sdk-react";
-import { createAccount } from "@turnkey/viem";
+        content: `import {
+  baseSepoliaBundlerRpc,
+  baseSepoliaPaymasterRpc,
+  entryPoint,
+  kernelAddresses,
+  kernelVersion,
+} from "@/lib/constants";
+import { useCreateWallet, useLogin, usePrivy, useSignAuthorization, useWallets } from "@privy-io/react-auth";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { signerToEcdsaValidator } from "@zerodev/ecdsa-validator";
+import { createKernelAccount, createKernelAccountClient, createZeroDevPaymasterClient } from "@zerodev/sdk";
+import React, { useEffect, useMemo } from "react";
+import { createWalletClient, custom, Hex, http } from "viem";
+import { baseSepolia, sepolia } from "viem/chains";
+import { usePublicClient } from "wagmi";
+import { AccountProviderContext, EmbeddedWallet } from "./provider-context";
 
 const kernelVersion = KERNEL_V3_3;
 const kernelAddresses = KernelVersionToAddressesMap[kernelVersion];
 
-// creating kernel clients with turnkey
-const { turnkey, authIframeClient, getActiveClient } = useTurnkey();
+// get privy wallet
+const { wallets } = useWallets();
+const { user } = usePrivy();
+const { createWallet } = useCreateWallet();
+const { signAuthorization } = useSignAuthorization();
 
-const session = await turnkey?.getSession();
-const turnkeyActiveAuthClient = await getActiveClient();
-await authIframeClient.injectCredentialBundle(session!.token);
-const suborgId = session?.organizationId;
-const userResponse = await authIframeClient!.getUser({
-  organizationId: suborgId!,
-  userId: session.userId!,
-});
-const walletsResponse = await authIframeClient!.getWallets({
-  organizationId: suborgId!,
-});
+const { login } = useLogin();
 
-let selectedWalletId = null;
-let selectedAccount = null;
-
-// Default to the first wallet if available
-if (walletsResponse.wallets.length > 0) {
-  selectedWalletId = walletsResponse.wallets[0].walletId;
-
-  const accountsResponse = await authIframeClient!.getWalletAccounts({
-    organizationId: suborgId!,
-    walletId: selectedWalletId,
-  });
-
-  if (accountsResponse.accounts.length > 0) {
-    selectedAccount = accountsResponse.accounts.filter(
-      (account) => account.addressFormat === "ADDRESS_FORMAT_ETHEREUM",
-    )?.[0];
-  }
-}
-
-const viemAccount = await createAccount({
-  client: turnkeyActiveClient,
-  organizationId: suborgId!,
-  signWith: selectedAccount?.address,
-  ethereumAddress: selectedAccount?.address,
-});
+const privyEmbeddedWallet = useMemo(() => {
+  return wallets.find((wallet) => wallet.walletClientType === "privy");
+}, [wallets]);
 
 const walletClient = createWalletClient({
-  account: viemAccount as Account,
+  account: privyEmbeddedWallet.address as Hex,
   chain: baseSepolia,
-  transport: http(),
+  transport: custom(await privyEmbeddedWallet.getEthereumProvider()),
 });
 
-const authorization = await walletClient.signAuthorization({
+const sepoliaPublicClient = usePublicClient({
+  chainId: sepolia.id,
+});
+const baseSepoliaPublicClient = usePublicClient({
   chainId: baseSepolia.id,
-  nonce: 0,
-  address: kernelAddresses.accountImplementationAddress,
+});
+
+createZeroDevPaymasterClient({
+  chain: baseSepolia,
+  transport: http(baseSepoliaPaymasterRpc),
+});
+
+const ecdsaValidator = await signerToEcdsaValidator(baseSepoliaPublicClient, {
+  signer: privyAccount,
+  entryPoint,
+  kernelVersion,
+});
+
+const authorization = await signAuthorization({
+  contractAddress: kernelAddresses.accountImplementationAddress,
+  chainId: baseSepolia.id,
 });
 
 const kernelAccount = await createKernelAccount(baseSepoliaPublicClient, {
-  eip7702Account: walletClient,
+  eip7702Account: privyAccount,
   entryPoint,
   kernelVersion,
   eip7702Auth: authorization,
@@ -107,51 +106,31 @@ const kernelAccountClient = createKernelAccountClient({
       {
         name: "context.ts",
         language: "react",
-        content: `import { TurnkeyProvider } from "@turnkey/sdk-react";
+        content: `iimport { PrivyProvider } from "@privy-io/react-auth";
+import { UserPill as PrivyUserPill } from "@privy-io/react-auth/ui";
+
 const wagmiConfig = ...;
 const queryClient = new QueryClient();
 
 // wrap your app in the following providers
-<QueryClientProvider client={queryClient}>
-  <WagmiProvider config={wagmiConfig}>
-    <TurnkeyProvider
-      config={{
-        // apiBaseUrl: "https://api.turnkey.com",
-        apiBaseUrl: process.env.NEXT_PUBLIC_BASE_URL!,
-        defaultOrganizationId: process.env.NEXT_PUBLIC_ORGANIZATION_ID!,
-        iframeUrl: "https://auth.turnkey.com",
-        rpId: process.env.NEXT_PUBLIC_RP_ID, // Your application's domain for WebAuthn flows
-      }}
-    >
-      <TurnkeyAccountProvider>{children}</TurnkeyAccountProvider>
-    </TurnkeyProvider>
-  </WagmiProvider>
-</QueryClientProvider>`,
+<WagmiProvider config={wagmiConfig}>
+  <PrivyProvider
+    appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
+    clientId={process.env.NEXT_PUBLIC_CLIENT_ID}
+    config={{
+      // Create embedded wallets for users who don't have a wallet
+      embeddedWallets: {
+        showWalletUIs: false,
+        createOnLogin: "all-users",
       },
-      {
-        name: "turnkey-user-pill.tsx",
-        language: "react",
-        content: `import { Auth as TurnkeyAuth, useTurnkey } from "@turnkey/sdk-react";
-
-<TurnkeyAuth
-  authConfig={{
-    emailEnabled: true,
-    // Set the rest to false to disable them
-    passkeyEnabled: false,
-    phoneEnabled: false,
-    appleEnabled: false,
-    facebookEnabled: false,
-    googleEnabled: false,
-    walletEnabled: false,
-  }}
-  onAuthSuccess={async () => {
-    // ...
-  }}
-  onError={(error) => {
-    // ...
-  }}
-  configOrder={["email"]}
-/>`,
+    }}
+  >
+    <PrivyAccountProvider>
+      <PrivyUserPill />
+      {children}
+    </PrivyAccountProvider>
+  </PrivyProvider>
+</WagmiProvider>`,
       },
     ],
   },
