@@ -51,7 +51,7 @@ const kernelAccountClient = connector.getAccountAbstractionProvider({
       {
         name: "context.ts",
         language: "react",
-        content: `import { TurnkeyProvider } from "@turnkey/sdk-react";
+        content: `
 const wagmiConfig = ...;
 const queryClient = new QueryClient();
 
